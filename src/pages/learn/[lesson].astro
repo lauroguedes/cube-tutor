@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import LessonPlayer from '../../components/LessonPlayer.vue';
+import { LESSONS, courseText } from '../../course';
+import { getLocaleFromUrl } from '../../i18n/utils';
+
+export function getStaticPaths() {
+  return LESSONS.map((l) => ({ params: { lesson: l.id } }));
+}
+
+const { lesson } = Astro.params;
+const locale = getLocaleFromUrl(Astro.url);
+const title = courseText(locale).lessons[lesson]?.title;
+---
+
+<Base title={title}>
+  <LessonPlayer client:only="vue" locale={locale} lessonId={lesson} />
+</Base>

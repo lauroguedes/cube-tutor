@@ -53,6 +53,10 @@
     --ink-soft: #9aa0ad;
     --hairline: #363943;
     --highlight-ink: #15161a;
+    --part-1: #6f9bff;
+    --part-2: #4ade80;
+    --part-3: #fb923c;
+    --part-4: #f87171;
     color-scheme: dark;
   }
 }

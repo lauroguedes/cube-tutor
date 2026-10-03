@@ -380,9 +380,10 @@ export class CubeView {
 
   private placeCamera(): void {
     const { theta, phi } = this.orbit;
-    const d = this.distance * (1 + this.explode.value * 0.45);
+    const d = this.distance * (1 + this.explode.value * 0.8);
     this.camera.position.set(d * Math.sin(phi) * Math.sin(theta), d * Math.cos(phi), d * Math.sin(phi) * Math.cos(theta));
-    this.labels.scale.setScalar(1 + this.explode.value * 0.55);
+    this.labels.scale.setScalar(1 + this.explode.value * 1.05);
+    this.core.scale.setScalar(1 + this.explode.value * 1.05);
     this.camera.lookAt(0, 0, 0);
     // Fade the floor shadow when looking from below.
     this.shadow.material.opacity = Math.max(0, Math.min(1, (Math.PI * 0.62 - phi) * 3));
@@ -412,7 +413,7 @@ export class CubeView {
   private baseMatrix(id: number, out: THREE.Matrix4): THREE.Matrix4 {
     const r: Mat3 = this._state.rots[id]!;
     const p = mulVec(r, CUBIES[id]!.home);
-    const s = 1 + this.explode.value * 0.55;
+    const s = 1 + this.explode.value * 1.05;
     return out.set(r[0], r[1], r[2], p[0] * s, r[3], r[4], r[5], p[1] * s, r[6], r[7], r[8], p[2] * s, 0, 0, 0, 1);
   }
 

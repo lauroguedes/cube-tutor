@@ -1,21 +1,11 @@
 ---
-import { getLocaleFromUrl, useTranslations } from '../i18n/utils';
+import Base from '../layouts/Base.astro';
+import Home from '../components/Home.vue';
+import { getLocaleFromUrl } from '../i18n/utils';
 
 const locale = getLocaleFromUrl(Astro.url);
-const t = useTranslations(locale);
 ---
 
-<html lang={locale}>
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{t('app.title')}</title>
-	</head>
-	<body>
-		<h1>{t('app.title')}</h1>
-		<p>{t('app.tagline')}</p>
-	</body>
-</html>
+<Base>
+  <Home client:load locale={locale} />
+</Base>

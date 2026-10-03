@@ -1,0 +1,46 @@
+---
+import Base from '../../layouts/Base.astro';
+import LessonMap from '../../components/LessonMap.vue';
+import { getLocaleFromUrl, localePath, useTranslations } from '../../i18n/utils';
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+---
+
+<Base title={t('learn.title')}>
+  <main class="wrap">
+    <header>
+      <a class="brand" href={localePath(locale, '/')}>{t('app.title')}</a>
+      <a class="play" href={localePath(locale, '/play')}>{t('home.freePlay')}</a>
+    </header>
+    <h1>{t('learn.title')}</h1>
+    <LessonMap client:load locale={locale} />
+  </main>
+</Base>
+
+<style>
+  .wrap {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: var(--gutter) var(--gutter) 4rem;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 2.2rem;
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .play {
+    color: var(--ink-soft);
+  }
+  h1 {
+    font-size: var(--step-3);
+    margin-bottom: 2rem;
+  }
+</style>
