@@ -35,3 +35,9 @@ export const SOLVING_GRIP = 'z2';
 
 /** A solved cube held in the solving grip (white bottom, green front). */
 export const SOLVED_IN_GRIP: CubeState = applyAlg(SOLVED, parseAlg(SOLVING_GRIP));
+
+/**
+ * A finished daisy in the solving grip: turning each side face twice from a
+ * solved grip lifts the four white edges up around the yellow center.
+ */
+export const DAISY: CubeState = applyAlg(SOLVED_IN_GRIP, parseAlg('F2 R2 B2 L2'));

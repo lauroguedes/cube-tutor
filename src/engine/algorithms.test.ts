@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SOLVED_IN_GRIP, lblAlg } from './algorithms';
+import { DAISY, SOLVED_IN_GRIP, lblAlg } from './algorithms';
 import { FACE_NORMAL, type Face } from './faces';
 import { addVec, matEquals, vecEquals, type Vec3 } from './geometry';
 import { setupFor } from './generate';
@@ -8,6 +8,7 @@ import {
   areLastLayerCornersPositioned,
   areLastLayerCornersSolved,
   isCrossSolved,
+  isDaisy,
   isFirstLayerSolved,
   isLastLayerCrossOriented,
   isSecondLayerSolved,
@@ -66,6 +67,32 @@ describe('the solving grip', () => {
     expect(sm.center('D')).toBe('white');
     expect(sm.center('U')).toBe('yellow');
     expect(sm.center('F')).toBe('green');
+  });
+});
+
+describe('daisy to cross', () => {
+  it('the daisy is the four white edges around yellow, white facing up', () => {
+    expect(isDaisy(DAISY)).toBe(true);
+    expect(isDaisy(G)).toBe(false);
+    expect(isCrossSolved(DAISY)).toBe(false);
+  });
+
+  it('turning each side face twice sends the petals down into a solved cross', () => {
+    expect(isCrossSolved(run(parseAlg('F2 R2 B2 L2'), DAISY))).toBe(true);
+  });
+
+  it('a misaligned daisy still works after turning the top to match each petal', () => {
+    // Turn the top first: now each petal must be lined up with U before its half turn.
+    const start = run(parseAlg('U'), DAISY);
+    expect(isCrossSolved(run(parseAlg("U' F2 R2 B2 L2"), start))).toBe(true);
+  });
+
+  it('a white edge in the middle layer goes up with one turn of the face that lifts its white sticker', () => {
+    // Edge at front-right with white facing front: R lifts it to the top, white up.
+    const start = setupFor(parseAlg('R'), DAISY);
+    expect(isDaisy(start)).toBe(false);
+    expect(stickers(start).colorAt(at('F', 'R'), 'F')).toBe('white');
+    expect(isDaisy(run(parseAlg('R'), start))).toBe(true);
   });
 });
 

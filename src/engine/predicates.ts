@@ -36,6 +36,16 @@ function sidePairs(base: Face): [Face, Face][] {
   return pairs;
 }
 
+/**
+ * The "daisy": all four white edges around the yellow center, white facing out
+ * of the yellow face. A beginner's stepping stone to the white cross.
+ */
+export function isDaisy(state: CubeState, color: Color = 'white'): boolean {
+  const sm = stickers(state);
+  const top = OPPOSITE[faceOfCenter(sm, color)];
+  return sideFaces(top).every((side) => sm.colorAt(pos(top, side), top) === color);
+}
+
 // ─── Stage goals for the beginner layer-by-layer method ────────────────────
 // `color` is the color of the first layer (white in the course).
 
