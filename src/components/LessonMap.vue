@@ -56,15 +56,21 @@ function status(id: string): 'done' | 'next' | 'locked' | 'open' {
               <span class="summary">{{ text.lessons[lesson.id]?.summary }}</span>
             </span>
             <span class="state">
-              {{
-                status(lesson.id) === 'done'
-                  ? t('learn.done')
-                  : status(lesson.id) === 'next'
-                    ? t('learn.next')
-                    : status(lesson.id) === 'locked'
-                      ? t('learn.locked')
-                      : ''
-              }}
+              <template v-if="status(lesson.id) === 'done'">
+                <svg class="icon done-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" fill="currentColor" />
+                  <path d="M7.5 12.4l3 2.9 6-6.3" fill="none" stroke="var(--surface)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="visually-hidden">{{ t('learn.done') }}</span>
+              </template>
+              <template v-else-if="status(lesson.id) === 'locked'">
+                <svg class="icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <rect x="5" y="10.5" width="14" height="10" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7" />
+                  <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                </svg>
+                <span class="visually-hidden">{{ t('learn.locked') }}</span>
+              </template>
+              <span v-else-if="status(lesson.id) === 'next'" class="next-tag">{{ t('learn.next') }}</span>
             </span>
           </component>
         </li>
@@ -105,7 +111,7 @@ li {
   grid-template-columns: 2.6rem 1fr auto;
   align-items: baseline;
   gap: 0.8rem;
-  padding: 0.95rem 0.2rem;
+  padding: 0.95rem 0.6rem;
   color: inherit;
   text-decoration: none;
 }
@@ -130,9 +136,15 @@ a.row:hover .name {
   color: var(--ink-soft);
 }
 .state {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
   font-family: var(--font-mono);
   font-size: var(--step--1);
   color: var(--ink-soft);
+}
+.icon {
+  display: block;
 }
 li.done .num {
   color: var(--part);
@@ -140,12 +152,18 @@ li.done .num {
 li.done .state {
   color: var(--success);
 }
-li.next .state {
-  color: var(--ink);
+.next-tag {
   background: var(--highlight);
   color: var(--highlight-ink);
   padding: 0.1em 0.5em;
   border-radius: 4px;
+}
+.row {
+  border-radius: var(--radius-sm);
+  transition: background-color 0.18s var(--ease);
+}
+a.row:hover {
+  background: var(--hover);
 }
 li.locked .row {
   opacity: 0.45;

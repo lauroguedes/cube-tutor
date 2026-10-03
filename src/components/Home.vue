@@ -6,15 +6,18 @@ import { invertAlg } from '../engine/moves';
 import type { Locale } from '../i18n/ui';
 import { localePath, useTranslations } from '../i18n/utils';
 import type { CubeView } from '../render/CubeView';
+import { CUBE_STYLES, STYLES, type CubeStyle } from '../render/palette';
 import { audioBase, loadManifest, VOICES, type VoiceId } from '../tutor/narration';
-import { loadProgress, nextLessonId, updateSettings } from '../tutor/progress';
+import { loadProgress, nextLessonId, updateSettings, SETTINGS_EVENT, type Settings } from '../tutor/progress';
 import CubeStage from './CubeStage.vue';
+import SettingsMenu from './SettingsMenu.vue';
 
 const props = defineProps<{ locale: Locale }>();
 const t = useTranslations(props.locale);
 const text = courseText(props.locale);
 
 const voice = ref<VoiceId>('female');
+const style = ref<CubeStyle>('classic');
 const resumeId = ref<string | null>(null);
 const sampling = ref<VoiceId | null>(null);
 let sample: HTMLAudioElement | null = null;
@@ -23,9 +26,30 @@ let idle = 0;
 
 const startHref = computed(() => localePath(props.locale, `/learn/${resumeId.value ?? LESSONS[0]!.id}`));
 
+/** A mini 3×3 face per style for the picker: the front of a solved cube with a twist. */
+const PREVIEW = ['green', 'green', 'white', 'green', 'green', 'white', 'red', 'red', 'orange'] as const;
+function previewColors(st: CubeStyle) {
+  const spec = STYLES[st];
+  const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
+  return { body: hex(spec.body), tiles: PREVIEW.map((c) => hex(spec.stickers[c])), gap: st === 'classic' ? '3px' : '1.5px' };
+}
+
+function chooseStyle(st: CubeStyle) {
+  style.value = st;
+  updateSettings({ style: st });
+}
+
+function onSettings(e: Event) {
+  const s = (e as CustomEvent<Settings>).detail;
+  voice.value = s.voice;
+  style.value = s.style;
+}
+
 onMounted(() => {
   const p = loadProgress();
   voice.value = p.settings.voice;
+  style.value = p.settings.style;
+  window.addEventListener(SETTINGS_EVENT, onSettings);
   const started = p.completedSteps.length > 0;
   resumeId.value = started ? nextLessonId(p) : null;
 });
@@ -80,6 +104,7 @@ function onReady(v: CubeView) {
 }
 
 onBeforeUnmount(() => {
+  window.removeEventListener(SETTINGS_EVENT, onSettings);
   view = null;
   clearTimeout(idle);
   sample?.pause();
@@ -87,7 +112,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="home">
+  <main class="home fx-mount">
+    <div class="corner"><SettingsMenu :locale="locale" /></div>
     <section class="copy">
       <p class="brand">{{ t('app.title') }}</p>
       <h1>{{ t('home.title') }}</h1>
@@ -98,7 +124,8 @@ onBeforeUnmount(() => {
         <div class="voice-row">
           <div v-for="v in VOICES" :key="v" class="voice" :class="{ on: voice === v }">
             <button type="button" class="pick" :aria-pressed="voice === v" @click="choose(v)">
-              {{ t(v === 'female' ? 'settings.female' : 'settings.male') }}
+              <span class="name">{{ t(v === 'female' ? 'settings.female' : 'settings.male') }}</span>
+              <span class="kind">{{ t(v === 'female' ? 'settings.femaleHint' : 'settings.maleHint') }}</span>
             </button>
             <button
               type="button"
@@ -110,6 +137,30 @@ onBeforeUnmount(() => {
               <svg v-else viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M6 4v12l10-6z" fill="currentColor" /></svg>
             </button>
           </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="styles">
+        <legend>{{ t('home.chooseStyle') }}</legend>
+        <div class="style-row">
+          <button
+            v-for="st in CUBE_STYLES"
+            :key="st"
+            type="button"
+            class="style"
+            :class="{ on: style === st }"
+            :aria-pressed="style === st"
+            @click="chooseStyle(st)"
+          >
+            <span
+              class="swatch"
+              :style="{ background: previewColors(st).body, gap: previewColors(st).gap, padding: previewColors(st).gap }"
+              aria-hidden="true"
+            >
+              <span v-for="(c, i) in previewColors(st).tiles" :key="i" :style="{ background: c }" />
+            </span>
+            {{ t(`style.${st}`) }}
+          </button>
         </div>
       </fieldset>
 
@@ -132,6 +183,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .home {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   align-items: center;
@@ -165,10 +217,60 @@ h1 {
   color: var(--ink-soft);
   max-width: 34ch;
 }
-.voices {
+.corner {
+  position: absolute;
+  top: var(--gutter);
+  right: var(--gutter);
+  z-index: 5;
+}
+.voices,
+.styles {
   border: 0;
   padding: 0;
-  margin: 0.4rem 0 0;
+  margin: 0.2rem 0 0;
+}
+.style-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.style {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 3em;
+  padding: 0 1em 0 0.45em;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 0.2s var(--ease),
+    box-shadow 0.2s var(--ease),
+    background-color 0.2s var(--ease);
+}
+.style:hover {
+  border-color: var(--ink-soft);
+  background-color: color-mix(in oklab, var(--surface) 85%, var(--ink));
+}
+.style.on {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.swatch {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 2.1em;
+  height: 2.1em;
+  border-radius: 7px;
+  transition: transform 0.25s var(--ease);
+}
+.style:hover .swatch {
+  transform: rotate(-8deg) scale(1.06);
+}
+.swatch span {
+  border-radius: 2.5px;
 }
 legend {
   font-size: var(--step--1);
@@ -188,17 +290,29 @@ legend {
   background: var(--surface);
   transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
+.voice:hover {
+  border-color: var(--ink-soft);
+}
 .voice.on {
   border-color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--ink);
 }
 .pick {
+  display: grid;
+  justify-items: start;
+  line-height: 1.1;
   border: 0;
   background: none;
-  height: 2.8em;
+  height: 3em;
   padding: 0 0.6em 0 1.1em;
-  font-weight: 700;
   cursor: pointer;
+}
+.name {
+  font-weight: 700;
+}
+.kind {
+  font-size: 0.72em;
+  color: var(--ink-soft);
 }
 .sample {
   display: grid;
@@ -210,6 +324,15 @@ legend {
   border-radius: 50%;
   background: var(--sweep);
   cursor: pointer;
+  transition:
+    background-color 0.18s var(--ease),
+    transform 0.12s var(--ease);
+}
+.sample:hover {
+  background: color-mix(in oklab, var(--sweep) 75%, var(--ink));
+}
+.sample:active {
+  transform: scale(0.92);
 }
 .cta {
   display: flex;
@@ -224,7 +347,6 @@ legend {
 }
 .secondary {
   color: var(--ink);
-  text-underline-offset: 4px;
 }
 .what {
   margin: 0;

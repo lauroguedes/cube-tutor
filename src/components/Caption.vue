@@ -33,8 +33,9 @@ const visible = computed(() => {
 const line = ref<HTMLElement | null>(null);
 watch(sentence, async () => {
   await nextTick();
-  line.value?.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], {
-    duration: 260,
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  line.value?.animate([{ opacity: 0, filter: 'blur(6px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'blur(0)', transform: 'none' }], {
+    duration: 340,
     easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
   });
 });
@@ -65,8 +66,8 @@ watch(sentence, async () => {
   transition: color 0.2s var(--ease);
   background-image: linear-gradient(var(--highlight), var(--highlight));
   background-repeat: no-repeat;
-  background-position: 0 88%;
-  background-size: 0% 38%;
+  background-position: var(--mark-pos);
+  background-size: 0% var(--mark-size);
   border-radius: 2px;
 }
 .word.said {
@@ -74,16 +75,9 @@ watch(sentence, async () => {
 }
 .word.now {
   color: var(--ink);
-  background-size: 100% 38%;
+  background-size: 100% var(--mark-size);
   transition:
     color 0.2s var(--ease),
     background-size 0.32s var(--ease);
-}
-@media (prefers-color-scheme: dark) {
-  .word.now {
-    color: var(--ink);
-    background-size: 100% 18%;
-    background-position: 0 100%;
-  }
 }
 </style>

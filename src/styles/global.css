@@ -8,6 +8,9 @@
   The cube sits on a cool, seamless studio backdrop so the stickers carry all
   the color. The only accent is the tutor's highlighter yellow, which marks
   the word being spoken. Parts of the course are coded by sticker color.
+
+  Theme: follows the system unless the learner picks one in Settings, which
+  sets data-theme="light" | "dark" on <html> (see Base.astro).
 */
 :root {
   --sweep: #e4e7ec;
@@ -16,10 +19,13 @@
   --ink: #15161a;
   --ink-soft: #5d6270;
   --hairline: #c9ced7;
+  --hover: rgb(21 22 26 / 0.06);
   --highlight: #ffd23a;
   --highlight-ink: #15161a;
   --success: #16a34a;
   --warn: #c2410c;
+  --mark-size: 38%;
+  --mark-pos: 0 88%;
 
   --part-1: #1d4ed8;
   --part-2: #16a34a;
@@ -40,25 +46,48 @@
   --radius-sm: 9px;
   --gutter: clamp(16px, 3vw, 32px);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --fx-duration: 0.32s;
+  --fx-blur: 8px;
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --sweep: #1b1d22;
     --sweep-deep: #101114;
     --surface: #24262c;
     --ink: #eef0f4;
     --ink-soft: #9aa0ad;
     --hairline: #363943;
+    --hover: rgb(238 240 244 / 0.07);
     --highlight-ink: #15161a;
+    --mark-size: 18%;
+    --mark-pos: 0 100%;
     --part-1: #6f9bff;
     --part-2: #4ade80;
     --part-3: #fb923c;
     --part-4: #f87171;
     color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --sweep: #1b1d22;
+  --sweep-deep: #101114;
+  --surface: #24262c;
+  --ink: #eef0f4;
+  --ink-soft: #9aa0ad;
+  --hairline: #363943;
+  --hover: rgb(238 240 244 / 0.07);
+  --highlight-ink: #15161a;
+  --mark-size: 18%;
+  --mark-pos: 0 100%;
+  --part-1: #6f9bff;
+  --part-2: #4ade80;
+  --part-3: #fb923c;
+  --part-4: #f87171;
+  color-scheme: dark;
 }
 
 *,
@@ -81,6 +110,9 @@ body {
   font-size: var(--step-0);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.3s var(--ease),
+    color 0.3s var(--ease);
 }
 
 h1,
@@ -98,6 +130,15 @@ button {
   color: inherit;
 }
 
+a {
+  color: inherit;
+  text-underline-offset: 4px;
+  transition: color 0.18s var(--ease), text-decoration-color 0.18s var(--ease);
+}
+a:hover {
+  text-decoration-color: var(--highlight);
+}
+
 :focus-visible {
   outline: 3px solid var(--highlight);
   outline-offset: 2px;
@@ -113,8 +154,12 @@ button {
   white-space: nowrap;
 }
 
-/* Shared buttons. Components only add size tweaks on top of these. */
+/* ── Shared buttons. Components only add size tweaks on top of these. ── */
+
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
   height: 2.5em;
   padding: 0 0.95em;
   border: 1px solid var(--hairline);
@@ -123,9 +168,17 @@ button {
   color: var(--ink);
   cursor: pointer;
   font-size: var(--step--1);
+  transition:
+    background-color 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    transform 0.12s var(--ease);
 }
 .chip:hover:not(:disabled) {
   border-color: var(--ink-soft);
+  background-color: color-mix(in oklab, var(--surface) 82%, var(--ink));
+}
+.chip:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .chip:disabled {
   opacity: 0.45;
@@ -138,6 +191,8 @@ button {
 }
 
 .primary {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -152,21 +207,126 @@ button {
   cursor: pointer;
   transition:
     transform 0.15s var(--ease),
-    opacity 0.2s var(--ease);
+    opacity 0.2s var(--ease),
+    box-shadow 0.2s var(--ease);
 }
 .primary:hover:not(:disabled) {
   transform: translateY(-1px);
+  box-shadow: 0 8px 20px -10px color-mix(in oklab, var(--ink) 70%, transparent);
+}
+.primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
 }
 .primary:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
+/* Round icon button (menu, settings, transport). */
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    transform 0.12s var(--ease);
+}
+.icon-btn:hover:not(:disabled) {
+  background-color: var(--hover);
+  border-color: var(--ink-soft);
+}
+.icon-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.icon-btn.solid {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+.icon-btn.solid:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--ink) 85%, var(--surface));
+}
+
+/* ── Motion: elements fade in/out through a soft blur. ──
+   Use with Vue: <Transition name="fx">…</Transition>. */
+
+.fx-enter-active,
+.fx-leave-active {
+  transition:
+    opacity var(--fx-duration) var(--ease),
+    filter var(--fx-duration) var(--ease),
+    transform var(--fx-duration) var(--ease);
+}
+.fx-enter-from,
+.fx-leave-to {
+  opacity: 0;
+  filter: blur(var(--fx-blur));
+  transform: translateY(4px) scale(0.985);
+}
+
+@keyframes fx-in {
+  from {
+    opacity: 0;
+    filter: blur(var(--fx-blur));
+  }
+}
+
+/* Islands mount after the page shell, so they fade in instead of popping. */
+.fx-mount {
+  animation: fx-in 0.5s var(--ease) both;
+}
+
+/* Page to page: the old page blurs out, the new one blurs in. */
+@view-transition {
+  navigation: auto;
+}
+::view-transition-old(root) {
+  animation: vt-out 0.26s var(--ease) both;
+}
+::view-transition-new(root) {
+  animation: vt-in 0.4s var(--ease) both;
+}
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    filter: blur(10px);
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --fx-blur: 0px;
+  }
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

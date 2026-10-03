@@ -5,8 +5,8 @@ import { AXIS_INDEX, mulVec, type Axis, type Mat3 } from '../engine/geometry';
 import { MOVE_SPECS, moveQuarters, type Alg, type Amount, type Move, type MoveName } from '../engine/moves';
 import { CUBIES, SOLVED, applyMove, type CubeState } from '../engine/state';
 import { buildMoveArrow } from './arrow';
-import { buildContactShadow, buildCore, buildCubies, buildLabel, type CubieMesh } from './meshes';
-import { DIM_HEX } from './palette';
+import { buildContactShadow, buildCore, buildCubies, buildLabel, disposeCubies, type CubieMesh } from './meshes';
+import { DIM_HEX, type CubeStyle } from './palette';
 
 // The interactive 3D cube. Framework-free: a Vue island owns one instance.
 //
@@ -104,7 +104,8 @@ export class CubeView {
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
   private readonly root = new THREE.Group();
-  private readonly cubies: CubieMesh[];
+  private cubies: CubieMesh[];
+  private style: CubeStyle;
   private readonly core: THREE.Group;
   private readonly shadow: ReturnType<typeof buildContactShadow>;
   private readonly labels = new THREE.Group();
@@ -129,12 +130,16 @@ export class CubeView {
   private viewTween: { from: { theta: number; phi: number }; to: { theta: number; phi: number }; t: number } | null =
     null;
   private distance = 12;
+  private width = 1;
+  private height = 1;
+  /** Where the cube sits in the frame: x/y in fractions of the view (+x right, +y down), zoom > 1 = smaller. */
+  private framing = { x: 0, y: 0, zoom: 1, tx: 0, ty: 0, tzoom: 1 };
   private lastTime = performance.now();
   private frame = 0;
   private dirty = true;
   private disposed = false;
 
-  constructor(private readonly container: HTMLElement, initial: CubeState = SOLVED) {
+  constructor(private readonly container: HTMLElement, initial: CubeState = SOLVED, style: CubeStyle = 'classic') {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -160,7 +165,8 @@ export class CubeView {
     rim.position.set(-5, 2, -4);
     this.scene.add(rim);
 
-    this.cubies = buildCubies();
+    this.style = style;
+    this.cubies = buildCubies(style);
     for (const c of this.cubies) this.root.add(c.group);
     this.core = buildCore();
     this.root.add(this.core);
@@ -240,10 +246,29 @@ export class CubeView {
     this.syncTransforms();
   }
 
+  /** Switch to another cube look, keeping the position, turns in progress and highlights. */
+  setStyle(style: CubeStyle): void {
+    if (style === this.style) return;
+    this.style = style;
+    for (const c of this.cubies) this.root.remove(c.group);
+    disposeCubies(this.cubies);
+    this.cubies = buildCubies(style);
+    for (const c of this.cubies) this.root.add(c.group);
+    this.syncTransforms();
+    this.paintHighlight();
+    // Re-apply the steady highlight glow on the new materials.
+    if (this.highlighted && this.pulseUntil === 0) this.pulseUntil = performance.now();
+    if (this.pointer.kind === 'turning') this.applyTurnAngle(this.pointer.axis, this.pointer.ids, this.pointer.angle);
+  }
+
   /** Light up these pieces and dim the rest (null clears). `pulse: false` skips the attention pulse. */
   highlight(ids: readonly number[] | null, opts: { pulse?: boolean } = {}): void {
     this.highlighted = ids && ids.length ? new Set(ids) : null;
     this.pulseUntil = this.highlighted ? performance.now() + (opts.pulse === false ? 0 : 3200) : 0;
+    this.paintHighlight();
+  }
+
+  private paintHighlight(): void {
     this.cubies.forEach((c) => {
       const lit = !this.highlighted || this.highlighted.has(c.id);
       c.stickers.forEach((s, i) => {
@@ -281,6 +306,14 @@ export class CubeView {
   /** 0 = assembled, 1 = pieces pulled apart to reveal the core. */
   setExplode(amount: number): void {
     this.explode.target = Math.max(0, Math.min(1, amount));
+    this.dirty = true;
+  }
+
+  /** Move the cube within the frame (to make room for panels), animated. */
+  setFraming(f: { x?: number; y?: number; zoom?: number }): void {
+    this.framing.tx = f.x ?? 0;
+    this.framing.ty = f.y ?? 0;
+    this.framing.tzoom = f.zoom ?? 1;
     this.dirty = true;
   }
 
@@ -363,6 +396,17 @@ export class CubeView {
       for (const w of waiters) w();
     }
 
+    // Framing
+    const fr = this.framing;
+    if (Math.abs(fr.x - fr.tx) + Math.abs(fr.y - fr.ty) + Math.abs(fr.zoom - fr.tzoom) > 1e-4) {
+      const k = this.reducedMotion ? 1 : Math.min(1, dt * 6);
+      fr.x += (fr.tx - fr.x) * k;
+      fr.y += (fr.ty - fr.y) * k;
+      fr.zoom += (fr.tzoom - fr.zoom) * k;
+      this.applyFraming();
+      this.dirty = true;
+    }
+
     // Camera
     if (this.viewTween) {
       const v = this.viewTween;
@@ -402,7 +446,7 @@ export class CubeView {
 
   private placeCamera(): void {
     const { theta, phi } = this.orbit;
-    const d = this.distance * (1 + this.explode.value * 0.8);
+    const d = this.distance * this.framing.zoom * (1 + this.explode.value * 0.8);
     this.camera.position.set(d * Math.sin(phi) * Math.sin(theta), d * Math.cos(phi), d * Math.sin(phi) * Math.cos(theta));
     this.labels.scale.setScalar(1 + this.explode.value * 1.05);
     this.core.scale.setScalar(1 + this.explode.value * 1.05);
@@ -415,6 +459,8 @@ export class CubeView {
   private resize(): void {
     const w = this.container.clientWidth || 1;
     const h = this.container.clientHeight || 1;
+    this.width = w;
+    this.height = h;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     // Fit a sphere around the cube (plus room for arrows) in both directions.
@@ -422,8 +468,15 @@ export class CubeView {
     const vFov = THREE.MathUtils.degToRad(this.camera.fov);
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * this.camera.aspect);
     this.distance = radius / Math.sin(Math.min(vFov, hFov) / 2);
-    this.camera.updateProjectionMatrix();
+    this.applyFraming();
     this.dirty = true;
+  }
+
+  private applyFraming(): void {
+    const { x, y } = this.framing;
+    if (Math.abs(x) < 1e-4 && Math.abs(y) < 1e-4) this.camera.clearViewOffset();
+    else this.camera.setViewOffset(this.width, this.height, -x * this.width, -y * this.height, this.width, this.height);
+    this.camera.updateProjectionMatrix();
   }
 
   // ─── Transforms ───────────────────────────────────────────────────────────

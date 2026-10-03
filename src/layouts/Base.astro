@@ -19,6 +19,14 @@ const { title } = Astro.props;
     <meta name="description" content={t('app.tagline')} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
+    <script is:inline>
+      // Apply a chosen light/dark theme before the first paint (no flash).
+      try {
+        var saved = JSON.parse(localStorage.getItem('cube-tutor:v1') || '{}');
+        var theme = saved.settings && saved.settings.theme;
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
     <title>{title ? `${title} · ${t('app.title')}` : t('app.title')}</title>
   </head>
   <body>

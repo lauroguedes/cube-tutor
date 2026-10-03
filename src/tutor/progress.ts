@@ -1,16 +1,23 @@
 import { LESSONS } from '../course/lessons';
+import type { CubeStyle } from '../render/palette';
 import type { VoiceId } from './narration';
 
 // Learner progress and settings, kept in this browser only (no accounts).
 // Every storage access is guarded: private windows or blocked storage just
 // mean progress isn't remembered between visits.
 
-const KEY = 'cube-tutor:v1';
+export const STORAGE_KEY = 'cube-tutor:v1';
+/** Fired on window with the new Settings whenever they change, so every island can follow. */
+export const SETTINGS_EVENT = 'cube-tutor:settings';
+
+export type ThemeChoice = 'system' | 'light' | 'dark';
 
 export interface Settings {
   voice: VoiceId;
   rate: number;
   muted: boolean;
+  theme: ThemeChoice;
+  style: CubeStyle;
 }
 
 export interface Progress {
@@ -22,20 +29,25 @@ export interface Progress {
 const DEFAULTS: Progress = {
   completedSteps: [],
   completedLessons: [],
-  settings: { voice: 'female', rate: 1, muted: false },
+  settings: { voice: 'female', rate: 1, muted: false, theme: 'system', style: 'classic' },
 };
 
+/** Used only when storage is unavailable, so progress still works for this visit. */
 let memory: Progress | null = null;
 
+/**
+ * Read progress fresh from storage every time (it's tiny), so another tab or
+ * an older copy in memory can never overwrite newer progress or settings.
+ */
 export function loadProgress(): Progress {
-  if (memory) return memory;
-  let stored: Partial<Progress> = {};
+  let stored: Partial<Progress> | null = null;
   try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) stored = JSON.parse(raw) as Partial<Progress>;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    stored = raw ? (JSON.parse(raw) as Partial<Progress>) : {};
   } catch {
-    // Unavailable or corrupted storage: start fresh.
+    // Unavailable or corrupted storage.
   }
+  if (stored === null) return memory ?? (memory = structuredClone(DEFAULTS));
   memory = {
     completedSteps: Array.isArray(stored.completedSteps) ? stored.completedSteps : [],
     completedLessons: Array.isArray(stored.completedLessons) ? stored.completedLessons : [],
@@ -47,7 +59,7 @@ export function loadProgress(): Progress {
 function save(p: Progress): void {
   memory = p;
   try {
-    localStorage.setItem(KEY, JSON.stringify(p));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
   } catch {
     // Not persisted; progress still works for this visit.
   }
@@ -67,7 +79,17 @@ export function updateSettings(patch: Partial<Settings>): Settings {
   const p = loadProgress();
   const settings = { ...p.settings, ...patch };
   save({ ...p, settings });
+  if (patch.theme) applyTheme(patch.theme);
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(SETTINGS_EVENT, { detail: settings }));
   return settings;
+}
+
+/** Follow the system theme, or force light/dark (mirrors the inline script in Base.astro). */
+export function applyTheme(theme: ThemeChoice): void {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  if (theme === 'system') delete root.dataset.theme;
+  else root.dataset.theme = theme;
 }
 
 export function resetProgress(): void {

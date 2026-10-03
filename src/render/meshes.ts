@@ -2,12 +2,10 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Vec3 } from '../engine/geometry';
 import { CUBIES } from '../engine/state';
-import { BODY_HEX, STICKER_HEX } from './palette';
+import { STYLES, type CubeStyle } from './palette';
 
 export const CUBIE_SIZE = 0.97;
 const HALF = CUBIE_SIZE / 2;
-const STICKER_SIZE = 0.82;
-const STICKER_RADIUS = 0.11;
 
 function roundedSquare(size: number, radius: number): THREE.Shape {
   const h = size / 2;
@@ -31,17 +29,22 @@ export interface CubieMesh {
   readonly baseColors: THREE.Color[];
 }
 
-/** Build the 26 cubie meshes. Each group is built at the origin; its transform places it. */
-export function buildCubies(): CubieMesh[] {
+/**
+ * Build the 26 cubie meshes in a given style. Each group is built at the
+ * origin; its transform places it. Stickerless styles use near-full-size
+ * colored tiles, so the dark body only shows as thin seams.
+ */
+export function buildCubies(style: CubeStyle = 'classic'): CubieMesh[] {
+  const spec = STYLES[style];
   const bodyGeometry = new RoundedBoxGeometry(CUBIE_SIZE, CUBIE_SIZE, CUBIE_SIZE, 4, 0.085);
   const bodyMaterial = new THREE.MeshPhysicalMaterial({
-    color: BODY_HEX,
-    roughness: 0.42,
+    color: spec.body,
+    roughness: spec.bodyRoughness,
     metalness: 0,
     clearcoat: 0.35,
     clearcoatRoughness: 0.5,
   });
-  const stickerGeometry = new THREE.ExtrudeGeometry(roundedSquare(STICKER_SIZE, STICKER_RADIUS), {
+  const stickerGeometry = new THREE.ExtrudeGeometry(roundedSquare(spec.stickerSize, spec.stickerRadius), {
     depth: 0.004,
     bevelEnabled: true,
     bevelThickness: 0.006,
@@ -63,12 +66,12 @@ export function buildCubies(): CubieMesh[] {
     const stickers: CubieMesh['stickers'] = [];
     const baseColors: THREE.Color[] = [];
     for (const s of def.stickers) {
-      const color = new THREE.Color(STICKER_HEX[s.color]);
+      const color = new THREE.Color(spec.stickers[s.color]);
       const material = new THREE.MeshPhysicalMaterial({
         color: color.clone(),
-        roughness: 0.3,
+        roughness: spec.roughness,
         metalness: 0,
-        clearcoat: 0.45,
+        clearcoat: spec.clearcoat,
         clearcoatRoughness: 0.25,
         emissive: new THREE.Color(0xffffff),
         emissiveIntensity: 0,
@@ -84,6 +87,20 @@ export function buildCubies(): CubieMesh[] {
     }
     return { id: def.id, group, stickers, baseColors };
   });
+}
+
+/** Free the GPU resources of a set of cubies (geometries and materials are shared per set). */
+export function disposeCubies(cubies: readonly CubieMesh[]): void {
+  const seen = new Set<THREE.BufferGeometry | THREE.Material>();
+  for (const c of cubies)
+    c.group.traverse((o) => {
+      if (!(o instanceof THREE.Mesh)) return;
+      for (const r of [o.geometry, o.material as THREE.Material])
+        if (!seen.has(r)) {
+          seen.add(r);
+          r.dispose();
+        }
+    });
 }
 
 /** The internal mechanism (core + axles), shown only in the exploded view. */

@@ -11,6 +11,7 @@ import { CubeHistory } from '../tutor/history';
 import { moveFromKey } from '../tutor/keyboard';
 import CubeStage from './CubeStage.vue';
 import MoveKey from './MoveKey.vue';
+import SettingsMenu from './SettingsMenu.vue';
 
 const props = defineProps<{ locale: Locale }>();
 const t = useTranslations(props.locale);
@@ -92,13 +93,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="play">
+  <div class="play fx-mount">
     <header class="top">
       <a class="brand" href="/">{{ t('app.title') }}</a>
       <h1>{{ t('play.title') }}</h1>
       <span class="status" :class="{ on: solved }" aria-live="polite">
         {{ solved ? t('play.solved') : `${t('play.moves')}: ${moveCount}` }}
       </span>
+      <SettingsMenu :locale="locale" />
     </header>
 
     <div class="cube">
@@ -151,7 +153,7 @@ onBeforeUnmount(() => {
 }
 .top {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 1rem;
   padding: var(--gutter) var(--gutter) 0;
 }
