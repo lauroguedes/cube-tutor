@@ -202,28 +202,7 @@ h1 {
   gap: 0.45rem;
   align-items: center;
 }
-.chip {
-  height: 2.6em;
-  padding: 0 0.95em;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  background: var(--surface);
-  cursor: pointer;
-  font-size: var(--step--1);
-}
-.chip:hover:not(:disabled) {
-  border-color: var(--ink-soft);
-}
-.chip:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-.chip.quiet {
+.chip.quiet:not([aria-pressed='true']) {
   background: transparent;
-}
-.chip[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--surface);
-  border-color: var(--ink);
 }
 </style>

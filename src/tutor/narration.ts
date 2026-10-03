@@ -40,7 +40,12 @@ export function loadManifest(locale: Locale, voice: VoiceId): Promise<Manifest |
   if (!p) {
     p = fetch(`${audioBase(locale, voice)}/manifest.json`)
       .then((r) => (r.ok ? (r.json() as Promise<Manifest>) : null))
-      .catch(() => null);
+      .catch(() => null)
+      .then((m) => {
+        // Don't remember a failure: the next step tries again (e.g. after a network blip).
+        if (!m) manifests.delete(key);
+        return m;
+      });
     manifests.set(key, p);
   }
   return p;

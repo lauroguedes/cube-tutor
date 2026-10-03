@@ -62,14 +62,14 @@ interface ActiveTurn {
   /** Move to commit when done (null = spring back, nothing changes). */
   move: Move | null;
   source: MoveSource;
-  resolve: () => void;
+  resolve: (completed: boolean) => void;
 }
 
 interface QueuedTurn {
   move: Move;
   duration: number;
   source: MoveSource;
-  resolve: () => void;
+  resolve: (completed: boolean) => void;
 }
 
 type PointerMode =
@@ -122,6 +122,8 @@ export class CubeView {
   private active: ActiveTurn | null = null;
   private pointer: PointerMode = { kind: 'idle' };
   private highlighted: Set<number> | null = null;
+  private pulseUntil = 0;
+  private idleWaiters: (() => void)[] = [];
   private explode = { value: 0, target: 0 };
   private orbit = { theta: VIEWS.default.theta, phi: VIEWS.default.phi, vTheta: 0, vPhi: 0 };
   private viewTween: { from: { theta: number; phi: number }; to: { theta: number; phi: number }; t: number } | null =
@@ -205,8 +207,8 @@ export class CubeView {
     this.syncTransforms();
   }
 
-  /** Animate one move. Resolves when it has finished. */
-  turn(move: Move, opts: { duration?: number; source?: MoveSource } = {}): Promise<void> {
+  /** Animate one move. Resolves true when it has finished, false if it was cancelled. */
+  turn(move: Move, opts: { duration?: number; source?: MoveSource } = {}): Promise<boolean> {
     const half = Math.abs(move.amount) === 2;
     const duration = opts.duration ?? (half ? 0.5 : 0.34);
     return new Promise((resolve) => {
@@ -220,20 +222,28 @@ export class CubeView {
     await Promise.all(alg.map((m) => this.turn(m, opts)));
   }
 
+  /** Resolves once no turn is running or queued and no layer is being dragged. */
+  whenIdle(): Promise<void> {
+    if (!this.busy && this.pointer.kind !== 'turning') return Promise.resolve();
+    return new Promise((resolve) => this.idleWaiters.push(resolve));
+  }
+
   /** Stop all animation; queued turns are dropped (their promises still resolve). */
   cancelTurns(): void {
-    for (const q of this.queue) q.resolve();
+    for (const q of this.queue) q.resolve(false);
     this.queue = [];
     if (this.active) {
-      this.active.resolve();
+      this.active.resolve(false);
       this.active = null;
     }
     if (this.pointer.kind === 'turning') this.pointer = { kind: 'idle' };
     this.syncTransforms();
   }
 
-  highlight(ids: readonly number[] | null): void {
+  /** Light up these pieces and dim the rest (null clears). `pulse: false` skips the attention pulse. */
+  highlight(ids: readonly number[] | null, opts: { pulse?: boolean } = {}): void {
     this.highlighted = ids && ids.length ? new Set(ids) : null;
+    this.pulseUntil = this.highlighted ? performance.now() + (opts.pulse === false ? 0 : 3200) : 0;
     this.cubies.forEach((c) => {
       const lit = !this.highlighted || this.highlighted.has(c.id);
       c.stickers.forEach((s, i) => {
@@ -327,6 +337,16 @@ export class CubeView {
   };
 
   private update(dt: number): void {
+    // Explode first, so a turn in progress is drawn on top of the new positions.
+    if (Math.abs(this.explode.value - this.explode.target) > 0.001) {
+      this.explode.value += (this.explode.target - this.explode.value) * Math.min(1, dt * 5);
+      if (Math.abs(this.explode.value - this.explode.target) <= 0.001) this.explode.value = this.explode.target;
+      this.core.visible = this.explode.value > 0.02;
+      this.syncTransforms();
+      if (this.pointer.kind === 'turning') this.applyTurnAngle(this.pointer.axis, this.pointer.ids, this.pointer.angle);
+      this.dirty = true;
+    }
+
     // Turns
     if (!this.active && this.queue.length && this.pointer.kind !== 'turning') this.startQueued();
     if (this.active) {
@@ -337,14 +357,10 @@ export class CubeView {
       if (t >= 1) this.finishActive();
       this.dirty = true;
     }
-
-    // Explode
-    if (Math.abs(this.explode.value - this.explode.target) > 0.001) {
-      this.explode.value += (this.explode.target - this.explode.value) * Math.min(1, dt * 5);
-      if (Math.abs(this.explode.value - this.explode.target) <= 0.001) this.explode.value = this.explode.target;
-      this.core.visible = this.explode.value > 0.02;
-      if (!this.active) this.syncTransforms();
-      this.dirty = true;
+    if (!this.busy && this.pointer.kind !== 'turning' && this.idleWaiters.length) {
+      const waiters = this.idleWaiters;
+      this.idleWaiters = [];
+      for (const w of waiters) w();
     }
 
     // Camera
@@ -372,10 +388,14 @@ export class CubeView {
     }
     this.placeCamera();
 
-    // Highlight pulse
-    if (this.highlighted) {
-      const glow = 0.12 + 0.1 * Math.sin(performance.now() / 260);
+    // Highlight: pulse briefly to draw the eye, then settle on a steady glow so
+    // the scene can stop re-rendering while nothing moves.
+    if (this.highlighted && this.pulseUntil > 0) {
+      const now = performance.now();
+      const settled = now >= this.pulseUntil;
+      const glow = settled ? 0.12 : 0.12 + 0.1 * Math.sin(now / 260);
       for (const id of this.highlighted) for (const s of this.cubies[id]!.stickers) s.material.emissiveIntensity = glow;
+      if (settled) this.pulseUntil = 0;
       this.dirty = true;
     }
   }
@@ -464,7 +484,7 @@ export class CubeView {
     if (a.move) this._state = applyMove(this._state, a.move);
     this.syncTransforms();
     if (a.move) this.emit('move', { move: a.move, source: a.source, state: this._state });
-    a.resolve();
+    a.resolve(true);
   }
 
   private emit<K extends keyof CubeViewEvents>(event: K, payload: CubeViewEvents[K]): void {

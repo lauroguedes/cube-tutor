@@ -1,5 +1,5 @@
 import type { Alg } from '../engine/moves';
-import { applyAlg, type CubeState } from '../engine/state';
+import type { CubeState } from '../engine/state';
 import type { CubeView } from '../render/CubeView';
 import type { Cue, ParsedScript, ScriptTiming } from './script';
 import { keycapsFor } from './keys';
@@ -45,7 +45,8 @@ export class NarrationPlayer {
   private useAudio: boolean;
   private keysAlg: string | null = null;
   private keysActive = -1;
-  private readonly offMove: () => void;
+  /** Bumped by every {{keys}} cue, so moves queued before it don't advance the new keys. */
+  private keysGeneration = 0;
   private readonly listeners: { [K in keyof PlayerEvents]: Set<Listener<PlayerEvents[K]>> } = {
     word: new Set(),
     keys: new Set(),
@@ -64,13 +65,6 @@ export class NarrationPlayer {
       this.audio.preservesPitch = true;
       this.audio.addEventListener('error', () => this.fallbackToClock());
     }
-    // Keycap karaoke: each scripted turn lights the next key.
-    this.offMove = opts.view.on('move', ({ source }) => {
-      if (source !== 'script' || !this.keysAlg) return;
-      const n = keycapsFor(this.keysAlg).keys.length;
-      this.keysActive = (this.keysActive + 1) % n;
-      this.emit('keys', { alg: this.keysAlg, active: this.keysActive });
-    });
   }
 
   get playing(): boolean {
@@ -142,22 +136,10 @@ export class NarrationPlayer {
     }
   }
 
-  /**
-   * Jump straight to the end: apply every remaining cue instantly.
-   * Used when skipping narration, so the cube ends up where the tutor left it.
-   */
-  finish(): void {
-    this.pause();
-    const cues = this.opts.script.cues;
-    for (; this.fired < cues.length; this.fired++) this.applyCue(cues[this.fired]!.cue, true);
-    this.complete();
-  }
-
   dispose(): void {
     this.disposed = true;
     this._playing = false;
     cancelAnimationFrame(this.frame);
-    this.offMove();
     if (this.audio) {
       this.audio.pause();
       this.audio.removeAttribute('src');
@@ -178,7 +160,10 @@ export class NarrationPlayer {
     const { cues } = this.opts.script;
     const times = this.opts.timing.cues;
     while (this.fired < cues.length && times[this.fired]! <= t) {
-      this.applyCue(cues[this.fired]!.cue, false);
+      const cue = cues[this.fired]!.cue;
+      // Jumping to a new position would cut a demo short: let queued turns finish first.
+      if (cue.type === 'state' && this.opts.view.busy) break;
+      this.applyCue(cue);
       this.fired++;
     }
 
@@ -216,15 +201,21 @@ export class NarrationPlayer {
     this.useAudio = false;
   }
 
-  private applyCue(cue: Cue, instant: boolean): void {
+  /** Keycap karaoke: light the next key when one of this player's turns finishes. */
+  private advanceKey(generation: number): void {
+    if (this.disposed || !this.keysAlg || generation !== this.keysGeneration) return;
+    this.keysActive = (this.keysActive + 1) % keycapsFor(this.keysAlg).keys.length;
+    this.emit('keys', { alg: this.keysAlg, active: this.keysActive });
+  }
+
+  private applyCue(cue: Cue): void {
     const view = this.opts.view;
     switch (cue.type) {
-      case 'move':
-        if (instant) {
-          view.cancelTurns();
-          view.setState(applyAlg(view.state, cue.alg));
-        } else void view.play(cue.alg);
+      case 'move': {
+        const generation = this.keysGeneration;
+        for (const m of cue.alg) void view.turn(m).then((completed) => completed && this.advanceKey(generation));
         break;
+      }
       case 'state':
         view.setState(this.opts.stateFor(cue.base, cue.alg));
         break;
@@ -247,6 +238,7 @@ export class NarrationPlayer {
         view.autoRotate = cue.on;
         break;
       case 'keys':
+        this.keysGeneration++;
         this.keysAlg = cue.alg;
         this.keysActive = -1;
         this.emit('keys', { alg: cue.alg, active: -1 });

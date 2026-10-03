@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { LESSONS, courseText } from '../course';
 import { randomScramble, seededRandom } from '../engine/generate';
+import { invertAlg } from '../engine/moves';
 import type { Locale } from '../i18n/ui';
 import { localePath, useTranslations } from '../i18n/utils';
 import type { CubeView } from '../render/CubeView';
@@ -50,22 +51,28 @@ async function listen(v: VoiceId) {
   sample.play().catch(() => (sampling.value = null));
 }
 
-// A slow, gentle demo: the cube scrambles and solves itself in the background.
+// A slow, gentle demo: the cube scrambles and solves itself in the background,
+// until the visitor starts turning it themselves.
+let demoStopped = false;
+
 function onReady(v: CubeView) {
   view = v;
   v.interaction.turns = true;
   v.autoRotate = true;
   v.speed = 0.8;
+  v.on('turnstart', () => {
+    demoStopped = true;
+    clearTimeout(idle);
+    v.autoRotate = false;
+  });
   const random = seededRandom(7);
   const loop = async () => {
-    if (!view) return;
+    if (!view || demoStopped) return;
     const moves = randomScramble(6, random);
     await view.play(moves, { duration: 0.42 });
     idle = window.setTimeout(async () => {
-      if (!view) return;
-      await view.play([...moves].reverse().map((m) => ({ name: m.name, amount: -m.amount as typeof m.amount })), {
-        duration: 0.42,
-      });
+      if (!view || demoStopped) return;
+      await view.play(invertAlg(moves), { duration: 0.42 });
       idle = window.setTimeout(loop, 1600);
     }, 1400);
   };
@@ -212,19 +219,8 @@ legend {
   margin-top: 0.4rem;
 }
 .primary {
-  display: inline-flex;
-  align-items: center;
   height: 3.2em;
   padding: 0 1.5em;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--surface);
-  font-weight: 700;
-  text-decoration: none;
-  transition: transform 0.15s var(--ease);
-}
-.primary:hover {
-  transform: translateY(-1px);
 }
 .secondary {
   color: var(--ink);

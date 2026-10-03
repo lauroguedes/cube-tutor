@@ -146,6 +146,9 @@ function enterStep(i: number) {
   v.interaction.pick = step.value.goal?.kind === 'pick';
   v.interaction.orbit = true;
 
+  // No manifest yet (e.g. a network blip at start): this step uses captions, the next ones retry.
+  if (!manifest.value) void loadManifest(props.locale, settings.value.voice).then((m) => (manifest.value = m));
+
   playClip(step.value.id, stepTxt.value.say, () => {
     narrationEnded.value = true;
     if (!isTask.value) v.interaction.turns = step.value.turns !== false;
@@ -662,19 +665,6 @@ h1 {
   gap: 0.4rem;
   margin-left: auto;
 }
-.chip {
-  height: 2.4em;
-  padding: 0 0.9em;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
-  background: var(--surface);
-  cursor: pointer;
-  font-size: var(--step--1);
-}
-.chip:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
 .transport {
   display: flex;
   justify-content: space-between;
@@ -691,28 +681,6 @@ h1 {
   font-family: var(--font-mono);
   font-size: var(--step--1);
   color: var(--ink-soft);
-}
-.primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 2.9em;
-  padding: 0 1.3em;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--surface);
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.15s var(--ease), opacity 0.2s var(--ease);
-}
-.primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-.primary:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
 
 @media (max-width: 560px) {
