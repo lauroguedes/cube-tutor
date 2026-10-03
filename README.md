@@ -10,14 +10,19 @@
 **Learn to solve the 3×3 cube with a patient, narrated tutor and an interactive 3D cube.**
 Free, open source, no account needed.
 
+**[cubetutor.lauroguedes.dev](https://cubetutor.lauroguedes.dev)**
+
+[![CI](https://github.com/lauroguedes/cube-tutor/actions/workflows/ci.yml/badge.svg)](https://github.com/lauroguedes/cube-tutor/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-ffd23a?style=flat-square)](LICENSE)
 [![Astro](https://img.shields.io/badge/Astro-7-BC52EE?style=flat-square&logo=astro&logoColor=white)](https://astro.build)
 [![Vue](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![Three.js](https://img.shields.io/badge/Three.js-r186-000000?style=flat-square&logo=threedotjs&logoColor=white)](https://threejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tested with Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev)
+[![Cloudflare Workers](https://img.shields.io/badge/hosted_on-Cloudflare-F38020?style=flat-square&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
 [![Node](https://img.shields.io/badge/node-%E2%89%A522.12-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-16a34a?style=flat-square)](#contributing)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy_me_a_coffee-FFDD00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/lauroguedes)
 
 <img src="docs/images/home.jpg" alt="Cube Tutor home page: choose a tutor voice and a cube style, next to a 3D cube" width="760">
 
@@ -82,6 +87,8 @@ Progress is saved in your browser. There are no accounts and no tracking.
 | Language | [TypeScript](https://www.typescriptlang.org) in strict mode |
 | Narration | [ElevenLabs](https://elevenlabs.io) text-to-speech (`eleven_v4`) with character timestamps, generated at build time |
 | Testing | [Vitest](https://vitest.dev) |
+| Hosting | [Cloudflare Workers](https://developers.cloudflare.com/workers/static-assets/) static assets, deployed by GitHub Actions |
+| SEO | Open Graph / Twitter cards, schema.org data, [`@astrojs/sitemap`](https://docs.astro.build/en/guides/integrations-guide/sitemap/) |
 | Fonts | [Bricolage Grotesque](https://fonts.google.com/specimen/Bricolage+Grotesque), [Atkinson Hyperlegible](https://www.brailleinstitute.org/freefont/), [IBM Plex Mono](https://www.ibm.com/plex/), self-hosted via [Fontsource](https://fontsource.org) |
 
 ## Getting started
@@ -116,6 +123,9 @@ The narration audio is already in the repository (`public/audio`), so the full c
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run narrate` | Generate narration audio for new or changed lines |
 | `npm run brand` | Regenerate the logo files and favicon from `src/brand/logo.ts` |
+| `npm run og` | Regenerate the social share image and PNG app icons |
+| `npm run deploy` | Build and deploy to Cloudflare with Wrangler |
+| `npm run preview:cf` | Build and serve the site in the local Cloudflare runtime |
 
 ## Narration (ElevenLabs)
 
@@ -149,10 +159,12 @@ Each clip is cached by its text, voice and model, so only new or edited lines us
 
 ```text
 cube-tutor/
+├── .github/              # CI + Cloudflare deploy workflow, Dependabot
 ├── docs/                 # Development plan, fact-check sources, README images
 ├── public/
 │   ├── audio/<locale>/   # Generated narration (MP3 + timing manifest per voice)
-│   └── logo.svg …        # Logo files and favicon
+│   ├── _headers          # Security and cache headers (Cloudflare)
+│   └── logo.svg …        # Logo files, favicon, share image, manifest
 ├── src/
 │   ├── brand/            # Logo source and project credits
 │   ├── components/       # Vue islands: lesson player, home, free play, settings…
@@ -166,7 +178,8 @@ cube-tutor/
 │   └── tutor/            # Narration scripts, audio-synced player, progress, story scenes
 └── tools/
     ├── brand/            # Logo/favicon generator
-    └── narrate/          # ElevenLabs narration generator
+    ├── narrate/          # ElevenLabs narration generator
+    └── og/               # Social share image and app icon generator
 ```
 
 ## How it works
@@ -195,13 +208,27 @@ The suite covers the cube engine (move notation, group properties, goal checks),
 
 ## Deployment
 
-The build output is a fully static site:
+The build output is a fully static site (`dist/`), served by [Cloudflare Workers static assets](https://developers.cloudflare.com/workers/static-assets/). The configuration is in [`wrangler.jsonc`](wrangler.jsonc): the site's own 404 page, automatic trailing slashes, and the custom domain `cubetutor.lauroguedes.dev`. Response headers (security and caching) live in [`public/_headers`](public/_headers).
+
+### Automatic (GitHub Actions)
+
+The [CI workflow](.github/workflows/ci.yml) type-checks, tests and builds every push and pull request. Pushes to `main` are then deployed to Cloudflare once two repository secrets are set (**Settings → Secrets and variables → Actions**):
+
+| Secret | Where to find it |
+| --- | --- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens → *Create token* with the **Edit Cloudflare Workers** template |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → Workers & Pages → Account ID (right sidebar) |
+
+Until they exist, the deploy job is skipped with a notice and CI still runs.
+
+### Manual
 
 ```bash
-npm run build
+npx wrangler login
+npm run deploy
 ```
 
-Deploy the `dist/` folder to any static host: [Netlify](https://www.netlify.com), [Vercel](https://vercel.com), [Cloudflare Pages](https://pages.cloudflare.com) or [GitHub Pages](https://pages.github.com). No server or environment variables are needed at runtime.
+To deploy somewhere else, set `SITE_URL` at build time so canonical URLs, social cards and the sitemap point at the right address (`SITE_URL=https://example.com npm run build`), and update the custom domain in `wrangler.jsonc`.
 
 ## Contributing
 
@@ -224,6 +251,8 @@ Found a problem? [Open an issue](https://github.com/lauroguedes/cube-tutor/issue
 
 ## License
 
-The code is released under the [MIT License](LICENSE). © 2026 [Lauro Guedes](https://github.com/lauroguedes).
+The code is released under the [MIT License](LICENSE). © 2026 [Lauro Guedes](https://lauroguedes.dev).
+
+If Cube Tutor helped you, you can [buy me a coffee](https://buymeacoffee.com/lauroguedes) ☕
 
 The bundled fonts are licensed under the SIL Open Font License. The narration audio in `public/audio` was generated with ElevenLabs; reusing it is subject to [ElevenLabs' terms](https://elevenlabs.io/terms-of-use).
