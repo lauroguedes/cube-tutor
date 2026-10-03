@@ -55,15 +55,15 @@ export const STYLES: Record<CubeStyle, StyleSpec> = {
   },
   // Soft stickerless pastels on a light core.
   pastel: {
-    body: 0xdedde4,
+    body: 0xcbcad4,
     bodyRoughness: 0.6,
     stickers: {
       white: 0xfbfaf6,
-      yellow: 0xfde68a,
-      green: 0x86efac,
-      blue: 0x93c5fd,
-      red: 0xf9a8c4,
-      orange: 0xfdba74,
+      yellow: 0xfbcf45,
+      green: 0x3ccb7c,
+      blue: 0x4f93ee,
+      red: 0xec5f8c,
+      orange: 0xf8873a,
     },
     stickerSize: 0.935,
     stickerRadius: 0.16,

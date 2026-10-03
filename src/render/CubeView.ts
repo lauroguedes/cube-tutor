@@ -5,7 +5,7 @@ import { AXIS_INDEX, mulVec, type Axis, type Mat3 } from '../engine/geometry';
 import { MOVE_SPECS, moveQuarters, type Alg, type Amount, type Move, type MoveName } from '../engine/moves';
 import { CUBIES, SOLVED, applyMove, type CubeState } from '../engine/state';
 import { buildMoveArrow } from './arrow';
-import { buildContactShadow, buildCore, buildCubies, buildLabel, disposeCubies, type CubieMesh } from './meshes';
+import { buildContactShadow, buildCore, buildCubies, buildFaceLabel, disposeCubies, onLogoReady, type CubieMesh, type FaceLabel } from './meshes';
 import { DIM_HEX, type CubeStyle } from './palette';
 
 // The interactive 3D cube. Framework-free: a Vue island owns one instance.
@@ -109,9 +109,16 @@ export class CubeView {
   private readonly core: THREE.Group;
   private readonly shadow: ReturnType<typeof buildContactShadow>;
   private readonly labels = new THREE.Group();
+  private readonly faceLabels: { label: FaceLabel; opacity: number }[] = [];
+  private readonly labelRay = new THREE.Ray();
+  private readonly labelBox = new THREE.Box3();
+  private readonly labelHit = new THREE.Vector3();
+  private readonly labelPos = new THREE.Vector3();
+  private readonly tilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.32);
   private arrow: THREE.Group | null = null;
   private readonly raycaster = new THREE.Raycaster();
   private readonly resizeObserver: ResizeObserver;
+  private readonly offLogo: () => void;
   private readonly listeners: { [K in keyof CubeViewEvents]: Set<(e: CubeViewEvents[K]) => void> } = {
     move: new Set(),
     pick: new Set(),
@@ -184,6 +191,8 @@ export class CubeView {
     canvas.addEventListener('pointermove', this.onPointerMove);
     canvas.addEventListener('pointerup', this.onPointerUp);
     canvas.addEventListener('pointercancel', this.onPointerUp);
+
+    this.offLogo = onLogoReady(() => (this.dirty = true));
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
@@ -334,6 +343,7 @@ export class CubeView {
   dispose(): void {
     this.disposed = true;
     cancelAnimationFrame(this.frame);
+    this.offLogo();
     this.resizeObserver.disconnect();
     this.cancelTurns();
     const canvas = this.renderer.domElement;
@@ -342,10 +352,14 @@ export class CubeView {
     canvas.removeEventListener('pointerup', this.onPointerUp);
     canvas.removeEventListener('pointercancel', this.onPointerUp);
     this.scene.traverse((o) => {
-      if (o instanceof THREE.Mesh || o instanceof THREE.Sprite) {
-        o.geometry.dispose();
-        const m = o.material as THREE.Material & { map?: THREE.Texture };
-        m.map?.dispose();
+      if (!(o instanceof THREE.Mesh || o instanceof THREE.Line || o instanceof THREE.Sprite)) return;
+      o.geometry.dispose();
+      const materials = (Array.isArray(o.material) ? o.material : [o.material]) as (THREE.Material & {
+        map?: THREE.Texture;
+      })[];
+      for (const m of materials) {
+        // The logo texture is shared by every cube on the page: keep it.
+        if (m.map && !m.map.userData.shared) m.map.dispose();
         m.dispose();
       }
     });
@@ -431,6 +445,7 @@ export class CubeView {
       }
     }
     this.placeCamera();
+    this.updateLabels(dt);
 
     // Highlight: pulse briefly to draw the eye, then settle on a steady glow so
     // the scene can stop re-rendering while nothing moves.
@@ -709,10 +724,38 @@ export class CubeView {
 
   private buildLabels(): void {
     for (const face of ['U', 'D', 'F', 'B', 'R', 'L'] as Face[]) {
-      const sprite = buildLabel(face);
       const n = FACE_NORMAL[face];
-      sprite.position.set(n[0] * 2.2, n[1] * 2.2, n[2] * 2.2);
-      this.labels.add(sprite);
+      const label = buildFaceLabel(face, new THREE.Vector3(n[0], n[1], n[2]));
+      this.labels.add(label.group);
+      this.faceLabels.push({ label, opacity: 1 });
+    }
+  }
+
+  /**
+   * Keep each letter coin turned toward the viewer (tilted so its rim shows),
+   * and fade the ones the cube is in front of, so they read as behind it.
+   */
+  private updateLabels(dt: number): void {
+    if (!this.labels.visible) return;
+    const scale = this.labels.scale.x;
+    const reach = 1.5 * (1 + this.explode.value * 1.05);
+    this.labelBox.min.setScalar(-reach);
+    this.labelBox.max.setScalar(reach);
+    for (const entry of this.faceLabels) {
+      const { coin, materials } = entry.label;
+      coin.quaternion.copy(this.camera.quaternion).multiply(this.tilt);
+      this.labelPos.copy(coin.position).multiplyScalar(scale);
+      const toLabel = this.labelPos.clone().sub(this.camera.position);
+      const distance = toLabel.length();
+      this.labelRay.set(this.camera.position, toLabel.normalize());
+      const hit = this.labelRay.intersectBox(this.labelBox, this.labelHit);
+      const behind = hit !== null && this.camera.position.distanceTo(hit) < distance - 0.05;
+      const target = behind ? 0.2 : 1;
+      if (Math.abs(entry.opacity - target) > 0.005) {
+        entry.opacity += (target - entry.opacity) * Math.min(1, dt * 10);
+        for (const m of materials) m.opacity = entry.opacity;
+        this.dirty = true;
+      }
     }
   }
 }

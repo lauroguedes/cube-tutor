@@ -11,6 +11,7 @@ import { audioBase, loadManifest, VOICES, type VoiceId } from '../tutor/narratio
 import { loadProgress, nextLessonId, updateSettings, SETTINGS_EVENT, type Settings } from '../tutor/progress';
 import CubeStage from './CubeStage.vue';
 import SettingsMenu from './SettingsMenu.vue';
+import BrandMark from './BrandMark.vue';
 
 const props = defineProps<{ locale: Locale }>();
 const t = useTranslations(props.locale);
@@ -115,7 +116,7 @@ onBeforeUnmount(() => {
   <main class="home fx-mount">
     <div class="corner"><SettingsMenu :locale="locale" /></div>
     <section class="copy">
-      <p class="brand">{{ t('app.title') }}</p>
+      <BrandMark class="brand" :label="t('app.title')" />
       <h1>{{ t('home.title') }}</h1>
       <p class="lede">{{ t('home.lede') }}</p>
 
@@ -123,9 +124,24 @@ onBeforeUnmount(() => {
         <legend>{{ t('home.chooseVoice') }}</legend>
         <div class="voice-row">
           <div v-for="v in VOICES" :key="v" class="voice" :class="{ on: voice === v }">
-            <button type="button" class="pick" :aria-pressed="voice === v" @click="choose(v)">
+            <button
+              type="button"
+              class="pick"
+              :aria-pressed="voice === v"
+              :title="t(v === 'female' ? 'settings.femaleHint' : 'settings.maleHint')"
+              @click="choose(v)"
+            >
+              <!-- Venus / Mars symbols -->
+              <svg v-if="v === 'female'" class="gender" viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="10" cy="7.5" r="4.6" />
+                <path d="M10 12.1v6M7.2 15.4h5.6" />
+              </svg>
+              <svg v-else class="gender" viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="8.3" cy="11.7" r="4.6" />
+                <path d="M11.6 8.4 17 3M12.6 3H17v4.4" />
+              </svg>
               <span class="name">{{ t(v === 'female' ? 'settings.female' : 'settings.male') }}</span>
-              <span class="kind">{{ t(v === 'female' ? 'settings.femaleHint' : 'settings.maleHint') }}</span>
+              <span class="visually-hidden">, {{ t(v === 'female' ? 'settings.femaleHint' : 'settings.maleHint') }}</span>
             </button>
             <button
               type="button"
@@ -199,9 +215,7 @@ onBeforeUnmount(() => {
   justify-items: start;
 }
 .brand {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-size: var(--step-1);
 }
 h1 {
   font-size: clamp(2.6rem, 1.6rem + 4.5vw, 5.4rem);
@@ -298,21 +312,32 @@ legend {
   box-shadow: inset 0 0 0 1px var(--ink);
 }
 .pick {
-  display: grid;
-  justify-items: start;
-  line-height: 1.1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   border: 0;
   background: none;
   height: 3em;
-  padding: 0 0.6em 0 1.1em;
+  padding: 0 0.9em 0 1em;
   cursor: pointer;
+}
+.gender {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--ink-soft);
+  transition: color 0.2s var(--ease);
+}
+.voice.on .gender {
+  color: var(--ink);
 }
 .name {
   font-weight: 700;
-}
-.kind {
-  font-size: 0.72em;
-  color: var(--ink-soft);
 }
 .sample {
   display: grid;

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import type { Vec3 } from '../engine/geometry';
 import { CUBIES } from '../engine/state';
+import { logoSymbolSvg } from '../brand/logo';
 import { STYLES, type CubeStyle } from './palette';
 
 export const CUBIE_SIZE = 0.97;
@@ -85,8 +86,74 @@ export function buildCubies(style: CubeStyle = 'classic'): CubieMesh[] {
       stickers.push(mesh);
       baseColors.push(color);
     }
+    // The white center carries the logo.
+    if (def.kind === 'center' && def.stickers[0]!.color === 'white') {
+      const decal = buildLogoDecal(spec.stickerSize);
+      decal.userData.cubieId = def.id;
+      group.add(decal);
+    }
     return { id: def.id, group, stickers, baseColors };
   });
+}
+
+/**
+ * The brand logo, printed on the white center like a maker's mark. Drawn from
+ * the SVG into a canvas texture (shared by every cube on the page).
+ */
+let logoTexture: THREE.CanvasTexture | null = null;
+let logoReady = false;
+const logoWaiters = new Set<() => void>();
+
+/** Run `cb` once the logo has been drawn (immediately if it already has). Returns an unsubscribe. */
+export function onLogoReady(cb: () => void): () => void {
+  if (logoReady) {
+    cb();
+    return () => {};
+  }
+  logoWaiters.add(cb);
+  return () => logoWaiters.delete(cb);
+}
+
+function getLogoTexture(): THREE.CanvasTexture {
+  if (logoTexture) return logoTexture;
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  texture.userData.shared = true;
+  const img = new Image();
+  img.onload = () => {
+    canvas.getContext('2d')!.drawImage(img, 0, 0, size, size);
+    texture.needsUpdate = true;
+    logoReady = true;
+    for (const cb of logoWaiters) cb();
+    logoWaiters.clear();
+  };
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(logoSymbolSvg(undefined, size))}`;
+  logoTexture = texture;
+  return texture;
+}
+
+function buildLogoDecal(stickerSize: number): THREE.Mesh {
+  const decal = new THREE.Mesh(
+    new THREE.PlaneGeometry(stickerSize * 0.86, stickerSize * 0.86),
+    new THREE.MeshPhysicalMaterial({
+      map: getLogoTexture(),
+      transparent: true,
+      roughness: 0.35,
+      clearcoat: 0.4,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+    }),
+  );
+  // Lie on the top sticker, upright when seen from the front.
+  decal.rotation.x = -Math.PI / 2;
+  decal.position.y = HALF + 0.0125;
+  decal.renderOrder = 1;
+  return decal;
 }
 
 /** Free the GPU resources of a set of cubies (geometries and materials are shared per set). */
@@ -97,6 +164,7 @@ export function disposeCubies(cubies: readonly CubieMesh[]): void {
       if (!(o instanceof THREE.Mesh)) return;
       for (const r of [o.geometry, o.material as THREE.Material])
         if (!seen.has(r)) {
+          // The logo texture is shared across cubes and styles: keep it.
           seen.add(r);
           r.dispose();
         }
@@ -145,25 +213,51 @@ export function buildContactShadow(): THREE.Mesh<THREE.PlaneGeometry, THREE.Mesh
   return mesh;
 }
 
-/** A letter floating off a face (U, R, F…) for the notation lessons. */
-export function buildLabel(text: string): THREE.Sprite {
-  const size = 128;
+/** A face letter (U, R, F…) for the notation lessons: a lit 3D coin on a leader line. */
+export interface FaceLabel {
+  readonly group: THREE.Group;
+  readonly coin: THREE.Group;
+  readonly line: THREE.Line;
+  readonly materials: (THREE.Material & { opacity: number })[];
+}
+
+export function buildFaceLabel(text: string, normal: THREE.Vector3): FaceLabel {
+  const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#111';
-  ctx.font = '600 72px system-ui, -apple-system, Segoe UI, sans-serif';
+  ctx.fillStyle = '#15161a';
+  ctx.font = '700 150px "Bricolage Grotesque Variable", system-ui, -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, size / 2, size / 2 + 4);
+  ctx.fillText(text, size / 2, size / 2 + 8);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }));
-  sprite.scale.setScalar(0.42);
-  sprite.renderOrder = 10;
-  return sprite;
+
+  // Labels draw on top of the cube (depthTest off); their opacity shows depth.
+  const shared = { transparent: true, depthTest: false, depthWrite: false };
+  const faceMat = new THREE.MeshStandardMaterial({ color: 0xfafaf7, roughness: 0.35, metalness: 0, ...shared });
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0xffd23a, roughness: 0.4, metalness: 0, ...shared });
+  const letterMat = new THREE.MeshBasicMaterial({ map: texture, ...shared });
+  const lineMat = new THREE.LineBasicMaterial({ color: 0xffd23a, ...shared });
+
+  const coin = new THREE.Group();
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.08, 48), [rimMat, faceMat, faceMat]);
+  disc.rotation.x = Math.PI / 2; // axis toward the viewer
+  disc.renderOrder = 10;
+  const letter = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), letterMat);
+  letter.position.z = 0.042;
+  letter.renderOrder = 11;
+  coin.add(disc, letter);
+
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([normal.clone().multiplyScalar(1.56), normal.clone().multiplyScalar(2.08)]),
+    lineMat,
+  );
+  line.renderOrder = 9;
+
+  const group = new THREE.Group();
+  coin.position.copy(normal).multiplyScalar(2.3);
+  group.add(line, coin);
+  return { group, coin, line, materials: [faceMat, rimMat, letterMat, lineMat] };
 }

@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import LessonMap from '../../components/LessonMap.vue';
 import SettingsMenu from '../../components/SettingsMenu.vue';
+import BrandMark from '../../components/BrandMark.vue';
 import { getLocaleFromUrl, localePath, useTranslations } from '../../i18n/utils';
 
 const locale = getLocaleFromUrl(Astro.url);
@@ -11,7 +12,7 @@ const t = useTranslations(locale);
 <Base title={t('learn.title')}>
   <main class="wrap fx-mount">
     <header>
-      <a class="brand" href={localePath(locale, '/')}>{t('app.title')}</a>
+      <BrandMark href={localePath(locale, '/')} label={t('app.title')} />
       <nav>
         <a class="play" href={localePath(locale, '/play')}>{t('home.freePlay')}</a>
         <SettingsMenu client:load locale={locale} />
@@ -39,11 +40,8 @@ const t = useTranslations(locale);
     align-items: center;
     gap: 1rem;
   }
-  .brand {
-    font-family: var(--font-display);
-    font-weight: 700;
-    color: var(--ink);
-    text-decoration: none;
+  header :global(.brand) {
+    font-size: var(--step-1);
   }
   .play {
     color: var(--ink-soft);

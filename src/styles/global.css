@@ -173,7 +173,7 @@ a:hover {
     border-color 0.18s var(--ease),
     transform 0.12s var(--ease);
 }
-.chip:hover:not(:disabled) {
+.chip:hover:not(:disabled):not([aria-pressed='true']) {
   border-color: var(--ink-soft);
   background-color: color-mix(in oklab, var(--surface) 82%, var(--ink));
 }
@@ -188,6 +188,9 @@ a:hover {
   background: var(--ink);
   color: var(--surface);
   border-color: var(--ink);
+}
+.chip[aria-pressed='true']:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--ink) 86%, var(--surface));
 }
 
 .primary {
