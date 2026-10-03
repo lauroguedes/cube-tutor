@@ -28,7 +28,7 @@ writeFileSync(
   join(PUBLIC, 'favicon.svg'),
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
 <rect width="64" height="64" rx="14" fill="#15161A"/>
-<g transform="translate(5.5 1) scale(0.83)">${inner(logoSymbolSvg({ body: '#F2F2EE', layer: '#FFD23A' }))}</g>
+<g transform="translate(5 4) scale(0.84)">${inner(logoSymbolSvg({ face: '#F2F2EE', accent: '#FFD23A' }))}</g>
 </svg>
 `,
 );

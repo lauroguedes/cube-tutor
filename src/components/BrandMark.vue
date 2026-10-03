@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { LOGO } from '../brand/logo';
 
-// Logo symbol + wordmark. The body follows the theme ink, so the mark works
-// on light and dark backgrounds; the turning layer stays highlighter yellow.
+// Logo symbol + wordmark. The bubble follows the theme ink (its sticker
+// holes show whatever is behind), so it works on light and dark backgrounds;
+// the highlighted sticker stays yellow.
 withDefaults(defineProps<{ href?: string; label: string; wordmark?: boolean }>(), { wordmark: true });
 </script>
 
 <template>
   <component :is="href ? 'a' : 'span'" class="brand" :href="href" :aria-label="wordmark ? undefined : label">
     <svg class="mark" :viewBox="LOGO.viewBox" aria-hidden="true">
-      <rect v-for="(r, i) in LOGO.rows" :key="i" v-bind="r" class="body" />
-      <rect v-bind="LOGO.layer" class="layer" :style="{ '--turn': `${LOGO.turn}deg` }" />
+      <path :d="LOGO.face" class="face" fill-rule="evenodd" />
+      <rect v-bind="LOGO.accent" class="accent" />
     </svg>
     <span v-if="wordmark" class="word">{{ label }}</span>
   </component>
@@ -33,18 +34,21 @@ withDefaults(defineProps<{ href?: string; label: string; wordmark?: boolean }>()
   flex: none;
   overflow: visible;
 }
-.body {
+.face {
   fill: var(--ink);
 }
-.layer {
+.accent {
   fill: var(--highlight);
   transform-box: fill-box;
   transform-origin: center;
-  transform: rotate(var(--turn));
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-/* Hovering the logo finishes the turn, a little cube move. */
-a.brand:hover .layer {
-  transform: rotate(-24deg);
+/* Hovering the logo: the tutor "speaks" and the highlighted sticker pops. */
+a.brand:hover .accent {
+  animation: speak 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes speak {
+  40% {
+    transform: scale(1.35);
+  }
 }
 </style>
