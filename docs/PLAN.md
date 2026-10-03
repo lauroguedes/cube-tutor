@@ -6,6 +6,18 @@ Sources: your Obsidian idea note (`IDEAS/Interactive 3D Rubik's Cube Learning Co
 
 ---
 
+## Status (2026-10-03)
+
+v1 is built: the engine, the 3D cube, 17 narrated lessons in English with a female and a male tutor voice (ElevenLabs `eleven_v4`), gated tasks with hints and "Show me", the lesson map, free play and saved progress. Differences from the original plan:
+
+- Lesson content lives in typed TypeScript modules (`src/course/`) instead of Astro content collections. That gives compile-time checks and lets `course.test.ts` prove every task is solvable.
+- The cross is taught with the daisy method, which ends directly in the solving grip.
+- Hints are text-only. Narration covers explanations, task instructions and success lines (about 27,000 characters for both voices).
+
+Still open: user testing (M4.5), CI, hosting, PWA/offline, colour-blind sticker mode, pt-BR.
+
+---
+
 ## 1. Product definition
 
 **One-line pitch:** a patient human-sounding teacher, sitting next to a beautiful 3D cube, that never lets you memorize a move you don't understand.

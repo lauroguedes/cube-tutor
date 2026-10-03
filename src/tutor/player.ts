@@ -2,6 +2,7 @@ import type { Alg } from '../engine/moves';
 import { applyAlg, type CubeState } from '../engine/state';
 import type { CubeView } from '../render/CubeView';
 import type { Cue, ParsedScript, ScriptTiming } from './script';
+import { keycapsFor } from './keys';
 import { resolveSelector } from './selectors';
 
 // Plays one narration clip and fires its cues in sync.
@@ -66,7 +67,7 @@ export class NarrationPlayer {
     // Keycap karaoke: each scripted turn lights the next key.
     this.offMove = opts.view.on('move', ({ source }) => {
       if (source !== 'script' || !this.keysAlg) return;
-      const n = this.keysAlg.trim().split(/\s+/).length;
+      const n = keycapsFor(this.keysAlg).keys.length;
       this.keysActive = (this.keysActive + 1) % n;
       this.emit('keys', { alg: this.keysAlg, active: this.keysActive });
     });

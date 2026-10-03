@@ -94,6 +94,8 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export class CubeView {
   readonly interaction: Interaction = { turns: true, orbit: true, pick: false };
+  private readonly reducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** Multiplier for animation speed (2 = twice as fast). */
   speed = 1;
   autoRotate = false;
@@ -348,7 +350,7 @@ export class CubeView {
     // Camera
     if (this.viewTween) {
       const v = this.viewTween;
-      v.t = Math.min(1, v.t + dt / 0.7);
+      v.t = Math.min(1, v.t + dt / (this.reducedMotion ? 0.2 : 0.7));
       const e = easeInOut(v.t);
       this.orbit.theta = v.from.theta + (v.to.theta - v.from.theta) * e;
       this.orbit.phi = v.from.phi + (v.to.phi - v.from.phi) * e;
@@ -363,7 +365,7 @@ export class CubeView {
         this.orbit.vPhi *= decay;
         this.dirty = true;
       }
-      if (this.autoRotate) {
+      if (this.autoRotate && !this.reducedMotion) {
         this.orbit.theta += dt * 0.25;
         this.dirty = true;
       }

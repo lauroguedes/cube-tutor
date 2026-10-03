@@ -9,6 +9,7 @@ import { localePath, useTranslations } from '../i18n/utils';
 import type { CubeView } from '../render/CubeView';
 import { CubeHistory } from '../tutor/history';
 import { moveFromKey } from '../tutor/keyboard';
+import { keycapsFor } from '../tutor/keys';
 import { loadManifest, resolveClip, type Manifest } from '../tutor/narration';
 import { NarrationPlayer } from '../tutor/player';
 import {
@@ -74,7 +75,8 @@ const isLastStep = computed(() => stepIndex.value === lesson.steps.length - 1);
 const solution = computed(() => stepSolution(step.value));
 const hints = computed(() => stepTxt.value.hints ?? []);
 const canUndo = computed(() => (historyTick.value, history.value?.canUndo ?? false));
-const keyList = computed(() => (keys.value ? keys.value.alg.trim().split(/\s+/) : []));
+const keycaps = computed(() => (keys.value ? keycapsFor(keys.value.alg) : null));
+const keyList = computed(() => keycaps.value?.keys ?? []);
 const pickGoal = computed(() => (step.value.goal?.kind === 'pick' ? step.value.goal : null));
 
 // ─── Setup ──────────────────────────────────────────────────────────────────
@@ -242,7 +244,7 @@ async function showMe() {
   await sleep(400);
   for (const [k, m] of moves.entries()) {
     if (!showing.value) return;
-    keys.value = { alg: sol, active: k };
+    keys.value = { alg: sol, active: k % keycapsFor(sol).keys.length };
     v.showArrow(m);
     await v.turn(m, { duration: 0.6 });
   }
@@ -423,6 +425,7 @@ const resumeId = computed(() => (unlocked.value ? null : nextLessonId()));
           :disabled="!view?.interaction.turns || showing"
           @press="view?.turn(parseAlg(k)[0]!, { source: 'user' })"
         />
+        <span v-if="(keycaps?.repeat ?? 1) > 1" class="repeat">×{{ keycaps?.repeat }}</span>
       </div>
 
       <div v-if="isTask" class="task" :class="{ done: taskDone }">
@@ -613,7 +616,14 @@ h1 {
 .keys {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.4rem;
+}
+.repeat {
+  margin-left: 0.2rem;
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  color: var(--ink-soft);
 }
 .task {
   display: flex;
