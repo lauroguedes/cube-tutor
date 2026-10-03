@@ -40,6 +40,7 @@ export class NarrationPlayer {
   private word = -1;
   private _playing = false;
   private _ended = false;
+  private disposed = false;
   private useAudio: boolean;
   private keysAlg: string | null = null;
   private keysActive = -1;
@@ -93,7 +94,7 @@ export class NarrationPlayer {
   }
 
   async play(): Promise<void> {
-    if (this._ended) return;
+    if (this._ended || this.disposed) return;
     this._playing = true;
     this.emit('playing', true);
     if (this.useAudio && this.audio) {
@@ -102,6 +103,11 @@ export class NarrationPlayer {
       } catch {
         // Autoplay blocked or decoding failed: keep going on the reading clock.
         this.fallbackToClock();
+      }
+      // Disposed or paused while waiting for the audio to start: stay silent.
+      if (this.disposed || !this._playing) {
+        this.audio.pause();
+        return;
       }
     }
     this.lastFrame = performance.now();
@@ -147,6 +153,8 @@ export class NarrationPlayer {
   }
 
   dispose(): void {
+    this.disposed = true;
+    this._playing = false;
     cancelAnimationFrame(this.frame);
     this.offMove();
     if (this.audio) {
@@ -160,7 +168,7 @@ export class NarrationPlayer {
   // ─── Internals ────────────────────────────────────────────────────────────
 
   private tick = (now: number) => {
-    if (!this._playing) return;
+    if (!this._playing || this.disposed) return;
     const dt = Math.min((now - this.lastFrame) / 1000, 0.1);
     this.lastFrame = now;
     if (!this.useAudio) this.clockTime += dt * this.rate;

@@ -12,7 +12,8 @@
     "astro": "astro",
     "check": "astro check",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "narrate": "tsx tools/narrate/narrate.ts"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.3",
@@ -28,7 +29,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.6.4",
     "@types/three": "^0.186.0",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
   }
