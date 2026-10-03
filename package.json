@@ -1,7 +1,33 @@
 {
   "name": "cube-tutor",
+  "version": "1.0.0",
+  "description": "Learn to solve the 3x3 cube with a narrated tutor and an interactive 3D cube. Free, no account.",
+  "private": true,
+  "license": "MIT",
+  "author": {
+    "name": "Lauro Guedes",
+    "url": "https://github.com/lauroguedes"
+  },
+  "homepage": "https://github.com/lauroguedes/cube-tutor#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lauroguedes/cube-tutor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lauroguedes/cube-tutor/issues"
+  },
+  "keywords": [
+    "rubiks-cube",
+    "cube",
+    "education",
+    "tutorial",
+    "threejs",
+    "astro",
+    "vue",
+    "elevenlabs",
+    "text-to-speech"
+  ],
   "type": "module",
-  "version": "0.0.1",
   "engines": {
     "node": ">=22.12.0"
   },

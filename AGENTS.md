@@ -30,4 +30,6 @@ Free, no-login web app that teaches beginners to solve the 3×3 cube with a narr
 - Every algorithm claim the tutor narrates must be proven in `src/engine/algorithms.test.ts`.
 - Exercises are judged by goal predicates relative to center colors (`src/engine/predicates.ts`), never by matching a move sequence.
 - Narration audio is generated at build time (`tools/narrate/`, ElevenLabs key in `.env`); no API keys in client code.
-- Commands: `npm run test`, `npm run check`, `npm run dev`.
+- Never commit `.env` or editor swap files (`.env.swp`); they hold the ElevenLabs key. Stage files explicitly rather than `git add -A` when secrets may be open in an editor.
+- Logo files and the favicon are generated from `src/brand/logo.ts` with `npm run brand`; credits live in `src/brand/project.ts`.
+- Commands: `npm run test`, `npm run check`, `npm run dev`, `npm run narrate`, `npm run brand`.

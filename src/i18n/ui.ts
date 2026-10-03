@@ -122,7 +122,12 @@ const en = {
   'settings.on': 'On',
   'settings.off': 'Off',
   'settings.reset': 'Reset my progress',
-  'settings.resetConfirm': 'This clears every completed lesson in this browser. Continue?',
+  'settings.resetTitle': 'Reset your progress?',
+  'settings.resetConfirm': 'This clears every completed lesson in this browser and takes you back to the start. Your settings stay as they are.',
+  'settings.resetAction': 'Reset progress',
+  'settings.cancel': 'Cancel',
+  'settings.madeBy': 'Made by',
+  'settings.source': 'Source code on GitHub',
   'settings.close': 'Close',
 } as const;
 

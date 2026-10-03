@@ -2,6 +2,7 @@
 //   public/logo.svg        symbol
 //   public/logo-full.svg   symbol + "Cube Tutor" wordmark
 //   public/favicon.svg     symbol on a dark tile (readable in light and dark tabs)
+//   docs/images/logo-light.svg, logo-dark.svg   README logo for GitHub's light and dark themes
 //
 //   npm run brand
 
@@ -10,7 +11,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { logoSymbolSvg } from '../../src/brand/logo';
 
-const PUBLIC = join(resolve(dirname(fileURLToPath(import.meta.url)), '../..'), 'public');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const PUBLIC = join(ROOT, 'public');
+const DOCS = join(ROOT, 'docs', 'images');
 const inner = (svg: string) => svg.replace(/^<svg[^>]*>\n?/, '').replace(/\n?<\/svg>$/, '');
 
 writeFileSync(join(PUBLIC, 'logo.svg'), logoSymbolSvg());
@@ -33,4 +36,7 @@ writeFileSync(
 `,
 );
 
-console.log('Wrote logo.svg, logo-full.svg and favicon.svg');
+writeFileSync(join(DOCS, 'logo-light.svg'), logoSymbolSvg(undefined, 96));
+writeFileSync(join(DOCS, 'logo-dark.svg'), logoSymbolSvg({ face: '#F2F2EE', accent: '#FFD23A' }, 96));
+
+console.log('Wrote logo.svg, logo-full.svg, favicon.svg and the README logos');

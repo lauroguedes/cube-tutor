@@ -13,9 +13,18 @@ yarn-error.log*
 pnpm-debug.log*
 
 
-# environment variables
+# environment variables (secrets): only the example is tracked
 .env
-.env.production
+.env.*
+!.env.example
+
+# editor swap/backup files (vim keeps a copy of open files, e.g. .env.swp)
+*.swp
+*.swo
+*~
+
+# local AI-assistant / preview tooling
+.claude/
 
 # macOS-specific files
 .DS_Store
