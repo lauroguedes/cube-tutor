@@ -66,6 +66,7 @@ Progress is saved in your browser. There are no accounts and no tracking.
 - 🎬 **Moves in sync with the voice**: turns, highlights, arrows, camera moves and the exploded view happen on the exact word they belong to.
 - ✅ **Tasks that check understanding**: tasks are judged by the cube's state, so any correct approach passes. Each one has hints, a *Show me* demo, undo and reset.
 - 📖 **History as a story**: animated scenes (a timeline, the 43-quintillion count, a 1982 stopwatch…) play alongside the narration.
+- 🔊 **Sound**: every turn makes a real cube click, and free play has calm focus music. Both can be turned off in Settings.
 - 🎨 **Three cube styles**: Classic, Stickerless and Pastel.
 - 🌗 **Light and dark themes**, following the system or set by hand.
 - 🕹️ **Free play mode** with scramble, undo/redo, face letters and an exploded view of the mechanism.
@@ -122,6 +123,7 @@ The narration audio is already in the repository (`public/audio`), so the full c
 | `npm test` | Run the test suite once |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run narrate` | Generate narration audio for new or changed lines |
+| `npm run sounds` | Generate the cube click sounds and the free play music (ElevenLabs) |
 | `npm run brand` | Regenerate the logo files and favicon from `src/brand/logo.ts` |
 | `npm run og` | Regenerate the social share image and PNG app icons |
 | `npm run deploy` | Build and deploy to Cloudflare with Wrangler |
@@ -162,10 +164,11 @@ cube-tutor/
 ├── .github/              # CI + Cloudflare deploy workflow, Dependabot
 ├── docs/                 # Development plan, fact-check sources, README images
 ├── public/
-│   ├── audio/<locale>/   # Generated narration (MP3 + timing manifest per voice)
+│   ├── audio/            # Narration per locale, cube sounds (sfx/) and focus music (music/)
 │   ├── _headers          # Security and cache headers (Cloudflare)
 │   └── logo.svg …        # Logo files, favicon, share image, manifest
 ├── src/
+│   ├── audio/            # Turn click sounds (Web Audio) and the free play music player
 │   ├── brand/            # Logo source and project credits
 │   ├── components/       # Vue islands: lesson player, home, free play, settings…
 │   ├── course/           # The 17 lessons: structure (lessons.ts) and text (text/<locale>.ts)
@@ -179,6 +182,7 @@ cube-tutor/
 └── tools/
     ├── brand/            # Logo/favicon generator
     ├── narrate/          # ElevenLabs narration generator
+    ├── sounds/           # ElevenLabs sound effects and music generator
     └── og/               # Social share image and app icon generator
 ```
 
@@ -243,7 +247,7 @@ Found a problem? [Open an issue](https://github.com/lauroguedes/cube-tutor/issue
 
 ## Acknowledgements
 
-- Narration voices generated with [ElevenLabs](https://elevenlabs.io).
+- Narration voices, cube sounds and focus music generated with [ElevenLabs](https://elevenlabs.io).
 - History facts checked against the sources listed in [`docs/SOURCES.md`](docs/SOURCES.md).
 - The beginner layer-by-layer method is a long-standing teaching approach shared by the cubing community.
 
@@ -255,4 +259,4 @@ The code is released under the [MIT License](LICENSE). © 2026 [Lauro Guedes](ht
 
 If Cube Tutor helped you, you can [buy me a coffee](https://buymeacoffee.com/lauroguedes) ☕
 
-The bundled fonts are licensed under the SIL Open Font License. The narration audio in `public/audio` was generated with ElevenLabs; reusing it is subject to [ElevenLabs' terms](https://elevenlabs.io/terms-of-use).
+The bundled fonts are licensed under the SIL Open Font License. The audio in `public/audio` (narration, sound effects and music) was generated with ElevenLabs; reusing it is subject to [ElevenLabs' terms](https://elevenlabs.io/terms-of-use).

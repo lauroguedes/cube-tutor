@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
     </section>
 
     <div class="cube">
-      <CubeStage :label="t('cube.label')" @ready="onReady">
+      <CubeStage :label="t('cube.label')" quiet-demo @ready="onReady">
         <template #fallback>{{ t('cube.noWebgl') }}</template>
       </CubeStage>
     </div>

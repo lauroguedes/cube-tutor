@@ -3,8 +3,14 @@ import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { CubeView } from '../render/CubeView';
 import type { CubeState } from '../engine/state';
 import { loadProgress, SETTINGS_EVENT, type Settings } from '../tutor/progress';
+import { turnSounds } from '../audio/turnSounds';
 
-const props = defineProps<{ initial?: CubeState; label: string }>();
+const props = defineProps<{
+  initial?: CubeState;
+  label: string;
+  /** Only the visitor's own turns click (e.g. the home page's background demo). */
+  quietDemo?: boolean;
+}>();
 const emit = defineEmits<{ ready: [view: CubeView] }>();
 
 const host = ref<HTMLDivElement | null>(null);
@@ -20,9 +26,13 @@ function webglAvailable(): boolean {
   }
 }
 
-// Follow the cube style chosen in Settings (or on the home page), live.
+let sfx = true;
+
+// Follow the cube style and sound setting chosen in Settings, live.
 function onSettings(e: Event) {
-  view.value?.setStyle((e as CustomEvent<Settings>).detail.style);
+  const s = (e as CustomEvent<Settings>).detail;
+  view.value?.setStyle(s.style);
+  sfx = s.sfx;
 }
 
 onMounted(() => {
@@ -30,7 +40,15 @@ onMounted(() => {
     failed.value = true;
     return;
   }
-  view.value = new CubeView(host.value, props.initial, loadProgress().settings.style);
+  const settings = loadProgress().settings;
+  sfx = settings.sfx;
+  view.value = new CubeView(host.value, props.initial, settings.style);
+  // Every turn clicks, in lessons, demos and free play alike (unless muted).
+  turnSounds.preload();
+  view.value.on('turning', ({ duration, source }) => {
+    if (!sfx || (props.quietDemo && source !== 'user')) return;
+    turnSounds.play({ fast: duration < 0.2 });
+  });
   window.addEventListener(SETTINGS_EVENT, onSettings);
   emit('ready', view.value);
 });

@@ -7,7 +7,9 @@ import { SOLVED } from '../engine/state';
 import type { Locale } from '../i18n/ui';
 import { localePath, useTranslations } from '../i18n/utils';
 import type { CubeView, ViewName } from '../render/CubeView';
+import { focusMusic } from '../audio/focusMusic';
 import { CubeHistory } from '../tutor/history';
+import { loadProgress, SETTINGS_EVENT, updateSettings, type Settings } from '../tutor/progress';
 import { moveFromKey } from '../tutor/keyboard';
 import BrandMark from './BrandMark.vue';
 import CubeStage from './CubeStage.vue';
@@ -30,6 +32,7 @@ const inside = ref(false);
 const solved = ref(true);
 const scrambled = ref(false);
 const moveCount = ref(0);
+const music = ref(loadProgress().settings.music);
 
 const faces: MoveName[] = ['R', 'L', 'U', 'D', 'F', 'B'];
 const views: ViewName[] = ['default', 'top', 'bottom', 'back'];
@@ -97,6 +100,23 @@ function toggleInside() {
   view.value?.setExplode(inside.value ? 1 : 0);
 }
 
+// ─── Focus music: starts with the first interaction (browsers require one) ──
+function startMusicOnGesture() {
+  if (music.value) void focusMusic.start();
+}
+
+function onSettings(e: Event) {
+  const next = (e as CustomEvent<Settings>).detail.music;
+  if (next === music.value) return;
+  music.value = next;
+  if (next) void focusMusic.start();
+  else focusMusic.stop();
+}
+
+function toggleMusic() {
+  updateSettings({ music: !music.value });
+}
+
 // Keep the cube clear of the rail, like in lessons.
 function updateFraming() {
   const v = view.value;
@@ -107,6 +127,9 @@ function updateFraming() {
 let resizeObserver: ResizeObserver | null = null;
 
 onMounted(() => {
+  window.addEventListener(SETTINGS_EVENT, onSettings);
+  window.addEventListener('pointerdown', startMusicOnGesture, { once: true, capture: true });
+  window.addEventListener('keydown', startMusicOnGesture, { once: true, capture: true });
   if (stageEl.value) {
     resizeObserver = new ResizeObserver(updateFraming);
     resizeObserver.observe(stageEl.value);
@@ -114,6 +137,10 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener(SETTINGS_EVENT, onSettings);
+  window.removeEventListener('pointerdown', startMusicOnGesture, { capture: true });
+  window.removeEventListener('keydown', startMusicOnGesture, { capture: true });
+  focusMusic.stop();
   window.removeEventListener('keydown', onKey);
   resizeObserver?.disconnect();
   history.value?.dispose();
@@ -183,6 +210,14 @@ onBeforeUnmount(() => {
               <path d="M7.5 13.5 10 6.5l2.5 7M8.4 11.2h3.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <span class="label">{{ t('play.labels') }}</span>
+          </button>
+          <button type="button" class="chip" :aria-pressed="music" @click="toggleMusic">
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+              <path d="M7.5 15.5V5l9-2v10.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="5.5" cy="15.5" r="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+              <circle cx="14.5" cy="13.5" r="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+            </svg>
+            <span class="label">{{ t('play.music') }}</span>
           </button>
           <button type="button" class="chip" :aria-pressed="inside" @click="toggleInside">
             <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">

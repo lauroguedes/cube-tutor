@@ -43,7 +43,8 @@
     "brand": "tsx tools/brand/generate.ts",
     "og": "tsx tools/og/generate.ts",
     "deploy": "astro build && wrangler deploy",
-    "preview:cf": "astro build && wrangler dev"
+    "preview:cf": "astro build && wrangler dev",
+    "sounds": "tsx tools/sounds/generate.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

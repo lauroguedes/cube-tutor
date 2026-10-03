@@ -18,6 +18,10 @@ export interface Settings {
   muted: boolean;
   theme: ThemeChoice;
   style: CubeStyle;
+  /** Click sounds when layers turn. */
+  sfx: boolean;
+  /** Background music in free play. */
+  music: boolean;
 }
 
 export interface Progress {
@@ -29,7 +33,7 @@ export interface Progress {
 const DEFAULTS: Progress = {
   completedSteps: [],
   completedLessons: [],
-  settings: { voice: 'female', rate: 1, muted: false, theme: 'system', style: 'classic' },
+  settings: { voice: 'female', rate: 1, muted: false, theme: 'system', style: 'classic', sfx: true, music: true },
 };
 
 /** Used only when storage is unavailable, so progress still works for this visit. */

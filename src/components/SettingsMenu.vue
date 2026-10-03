@@ -187,6 +187,22 @@ defineExpose({ isOpen: () => open.value || confirmingReset.value });
           </div>
         </fieldset>
 
+        <fieldset>
+          <legend>{{ t('settings.sfx') }}</legend>
+          <div class="seg">
+            <button type="button" :aria-pressed="settings.sfx" @click="change({ sfx: true })">{{ t('settings.on') }}</button>
+            <button type="button" :aria-pressed="!settings.sfx" @click="change({ sfx: false })">{{ t('settings.off') }}</button>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>{{ t('settings.music') }} <span class="hint">· {{ t('settings.musicHint') }}</span></legend>
+          <div class="seg">
+            <button type="button" :aria-pressed="settings.music" @click="change({ music: true })">{{ t('settings.on') }}</button>
+            <button type="button" :aria-pressed="!settings.music" @click="change({ music: false })">{{ t('settings.off') }}</button>
+          </div>
+        </fieldset>
+
         <div class="foot">
           <button type="button" class="link" @click="confirmingReset = true">{{ t('settings.reset') }}</button>
           <button type="button" class="chip" @click="close()">{{ t('settings.close') }}</button>
@@ -248,6 +264,9 @@ defineExpose({ isOpen: () => open.value || confirmingReset.value });
   backdrop-filter: blur(14px);
   box-shadow: 0 22px 60px -24px rgb(0 0 0 / 0.45);
   transform-origin: top right;
+  max-height: calc(100dvh - 5.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 fieldset {
   border: 0;
@@ -260,6 +279,9 @@ legend {
   font-size: var(--step--1);
   color: var(--ink-soft);
   margin-bottom: 0.35rem;
+}
+.hint {
+  opacity: 0.75;
 }
 .seg {
   display: flex;

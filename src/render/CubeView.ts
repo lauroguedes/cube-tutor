@@ -24,6 +24,8 @@ export interface CubeViewEvents {
   pick: { cubieId: number };
   /** The learner started dragging a layer. */
   turnstart: Record<string, never>;
+  /** A layer starts animating toward a committed move (for sounds). */
+  turning: { move: Move; source: MoveSource; duration: number };
 }
 
 export interface Interaction {
@@ -123,6 +125,7 @@ export class CubeView {
     move: new Set(),
     pick: new Set(),
     turnstart: new Set(),
+    turning: new Set(),
   };
 
   private _state: CubeState = SOLVED;
@@ -544,6 +547,7 @@ export class CubeView {
       source: q.source,
       resolve: q.resolve,
     };
+    this.emit('turning', { move: q.move, source: q.source, duration: q.duration });
   }
 
   private finishActive(): void {
@@ -718,6 +722,7 @@ export class CubeView {
       source: 'user',
       resolve: () => {},
     };
+    if (move) this.emit('turning', { move, source: 'user', duration: this.active.duration });
   }
 
   // ─── Labels ───────────────────────────────────────────────────────────────
