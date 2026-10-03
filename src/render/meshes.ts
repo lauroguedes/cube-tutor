@@ -138,7 +138,7 @@ function getLogoTexture(): THREE.CanvasTexture {
 
 function buildLogoDecal(stickerSize: number): THREE.Mesh {
   const decal = new THREE.Mesh(
-    new THREE.PlaneGeometry(stickerSize * 0.86, stickerSize * 0.86),
+    new THREE.PlaneGeometry(stickerSize * 0.8, stickerSize * 0.8),
     new THREE.MeshPhysicalMaterial({
       map: getLogoTexture(),
       transparent: true,

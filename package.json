@@ -13,7 +13,8 @@
     "check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "narrate": "tsx tools/narrate/narrate.ts"
+    "narrate": "tsx tools/narrate/narrate.ts",
+    "brand": "tsx tools/brand/generate.ts"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.3",

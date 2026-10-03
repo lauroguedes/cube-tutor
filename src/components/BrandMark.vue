@@ -1,22 +1,16 @@
 <script setup lang="ts">
-import { LOGO_PATHS as P } from '../brand/logo';
+import { LOGO } from '../brand/logo';
 
-// Logo symbol + wordmark. The side faces follow the theme ink, so the mark
-// works on light and dark backgrounds; the top stays highlighter yellow.
+// Logo symbol + wordmark. The body follows the theme ink, so the mark works
+// on light and dark backgrounds; the turning layer stays highlighter yellow.
 withDefaults(defineProps<{ href?: string; label: string; wordmark?: boolean }>(), { wordmark: true });
 </script>
 
 <template>
   <component :is="href ? 'a' : 'span'" class="brand" :href="href" :aria-label="wordmark ? undefined : label">
-    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
-      <g stroke-linecap="round" stroke-linejoin="round">
-        <path :d="P.left" class="left" />
-        <path :d="P.right" class="right" />
-        <path :d="P.top" class="top" />
-        <path :d="`${P.gridLeft} ${P.gridRight}`" class="grid-side" />
-        <path :d="P.gridTop" class="grid-top" />
-        <path :d="`${P.outline} M32 33 L32 54 M13.81 22.5 L32 33 L50.19 22.5`" class="edge" />
-      </g>
+    <svg class="mark" :viewBox="LOGO.viewBox" aria-hidden="true">
+      <rect v-for="(r, i) in LOGO.rows" :key="i" v-bind="r" class="body" />
+      <rect v-bind="LOGO.layer" class="layer" :style="{ '--turn': `${LOGO.turn}deg` }" />
     </svg>
     <span v-if="wordmark" class="word">{{ label }}</span>
   </component>
@@ -26,44 +20,31 @@ withDefaults(defineProps<{ href?: string; label: string; wordmark?: boolean }>()
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   color: var(--ink);
   text-decoration: none;
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-weight: 650;
+  letter-spacing: -0.02em;
 }
 .mark {
-  width: 1.75em;
-  height: 1.75em;
+  width: 1.6em;
+  height: 1.6em;
   flex: none;
-  transition: transform 0.35s var(--ease);
+  overflow: visible;
 }
-a.brand:hover .mark {
-  transform: rotate(-12deg) scale(1.06);
-}
-.left {
+.body {
   fill: var(--ink);
 }
-.right {
-  fill: color-mix(in oklab, var(--ink) 78%, var(--surface));
-}
-.top {
+.layer {
   fill: var(--highlight);
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(var(--turn));
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.grid-side {
-  fill: none;
-  stroke: color-mix(in oklab, var(--surface) 35%, transparent);
-  stroke-width: 1.3;
-}
-.grid-top {
-  fill: none;
-  stroke: rgb(21 22 26 / 0.55);
-  stroke-width: 1.3;
-}
-.edge {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 1.6;
+/* Hovering the logo finishes the turn, a little cube move. */
+a.brand:hover .layer {
+  transform: rotate(-24deg);
 }
 </style>
