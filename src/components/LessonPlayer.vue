@@ -318,7 +318,7 @@ function onReset() {
 // ─── Keyboard ───────────────────────────────────────────────────────────────
 function onKey(e: KeyboardEvent) {
   if (!started.value || showSettings.value) return;
-  const target = e.target as HTMLElement | null;
+  const target = e.target instanceof Element ? e.target : null;
   if (target?.closest('button, a, input, select, textarea')) {
     if (e.key === ' ' || e.key === 'Enter') return; // let focused controls handle it
   }
