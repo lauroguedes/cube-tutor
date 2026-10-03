@@ -50,26 +50,22 @@ export const en: CourseText = {
       ],
     },
 
-    // ── History ──
-    'history-rubik': {
-      say: `In 1974, in Budapest, a young professor named Ernő Rubik was teaching design and architecture.
+    // ── History: one story, scenes follow the narration ──
+    'history-story': {
+      say: `{{scene year}}In 1974, in Budapest, a young professor named {{scene rubik}}Ernő Rubik was teaching design and architecture.
         He wanted a way to show his students how objects can move in three dimensions.
-        So he built a small cube out of smaller blocks, one that could twist in every direction without falling apart.
+        {{scene blocks}}{{explode on}}So he built a small cube out of smaller blocks, {{explode off}}one that could twist in every direction without falling apart.
         Then he turned it a few times. {{moves R U F'}} And then a few more. {{moves L D' B}}
-        Getting it back was much harder than he expected. It took him about a month to solve his own invention.`,
-    },
-    'history-numbers': {
-      say: `He called it the Magic Cube. It went on sale in Hungarian toy shops in 1977, and in 1980 it launched around the world under a new name: the Rubik's Cube.
+        {{scene month}}Getting it back was much harder than he expected. It took him about a month to solve his own invention.
+        {{scene timeline:1}}He called it the Magic Cube. {{scene timeline:2}}It went on sale in Hungarian toy shops in 1977, {{scene timeline:3}}and in 1980 it launched around the world under a new name: the Rubik's Cube.
         It became one of the best-selling puzzles ever made.
-        {{state home: R U F' L D' B2 R' U2 F D2 L'}}Here's why it's so hard. A cube like this can be mixed into more than forty-three quintillion different patterns. That's forty-three, followed by eighteen zeros.
-        If you checked one pattern every second, it would take about a hundred times the age of the universe.
-        {{state home}}And only one of those patterns is solved.`,
-    },
-    'history-method': {
-      say: `So how does anyone solve it? Not by luck.
-        In 1982, the first world championship was held in Budapest. The winner solved the cube in under twenty-three seconds.
-        In 2010, researchers used computers to prove that any mixed-up cube can be solved in twenty moves or fewer.
-        You won't need anything like that. You'll learn a method: a few steps, done in order, using a handful of short move sequences called algorithms.
+        {{state home: R U F' L D' B2 R' U2 F D2 L'}}{{scene patterns}}Here's why it's so hard. A cube like this can be mixed into more than forty-three quintillion different patterns. That's forty-three, followed by eighteen zeros.
+        {{scene universe}}If you checked one pattern every second, it would take about a hundred times the age of the universe.
+        {{state home}}{{scene one}}And only one of those patterns is solved.
+        So how does anyone solve it? Not by luck.
+        {{scene championship}}In 1982, the first world championship was held in Budapest. The winner solved the cube in under twenty-three seconds.
+        {{scene gods-number}}In 2010, researchers used computers to prove that any mixed-up cube can be solved in twenty moves or fewer.
+        {{scene method}}You won't need anything like that. You'll learn a method: a few steps, done in order, using a handful of short move sequences called algorithms.
         That's how everyone learns. And by the end of this course, you'll be doing it too.`,
     },
 

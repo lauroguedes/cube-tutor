@@ -44,12 +44,22 @@ describe('parseScript', () => {
     expect(grip.type === 'state' && grip.base).toBe('grip');
   });
 
+  it('parses story scenes, with optional parts', () => {
+    const s = parseScript('{{scene year}}One. {{scene timeline:2}}Two. {{scene none}}');
+    expect(s.cues.map((c) => c.cue)).toEqual([
+      { type: 'scene', scene: { name: 'year', part: 1 } },
+      { type: 'scene', scene: { name: 'timeline', part: 2 } },
+      { type: 'scene', scene: null },
+    ]);
+  });
+
   it('rejects unknown or malformed cues', () => {
     expect(() => parseScript('{{dance R}}')).toThrow(ScriptError);
     expect(() => parseScript('{{arrow R U}}')).toThrow(ScriptError);
     expect(() => parseScript('{{view sideways}}')).toThrow(ScriptError);
     expect(() => parseScript('{{highlight type:triangle}}')).toThrow(ScriptError);
     expect(() => parseScript('{{move Q}}')).toThrow();
+    expect(() => parseScript('{{scene fireworks}}')).toThrow(ScriptError);
   });
 });
 

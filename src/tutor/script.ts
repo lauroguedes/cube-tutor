@@ -1,4 +1,5 @@
 import { parseAlg, type Move } from '../engine/moves';
+import { parseScene, type SceneRef } from './scenes';
 
 // Narration scripts with inline cue markers, e.g.
 //
@@ -28,7 +29,8 @@ export type Cue =
   | { type: 'explode'; on: boolean }
   | { type: 'autorotate'; on: boolean }
   | { type: 'state'; base: 'home' | 'grip' | 'daisy'; alg: Move[] }
-  | { type: 'keys'; alg: string | null };
+  | { type: 'keys'; alg: string | null }
+  | { type: 'scene'; scene: SceneRef | null };
 
 export interface TimedCue {
   /** Character offset in the clean text where the cue fires. */
@@ -112,6 +114,12 @@ export function parseCue(name: string, arg: string): Cue {
       if (arg === 'none') return { type: 'keys', alg: null };
       parseAlg(arg); // validate
       return { type: 'keys', alg: arg };
+    case 'scene':
+      try {
+        return { type: 'scene', scene: parseScene(arg) };
+      } catch {
+        throw new ScriptError(`Unknown scene in ${where}`);
+      }
     default:
       throw new ScriptError(`Unknown cue "${name}" in ${where}`);
   }

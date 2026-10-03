@@ -3,6 +3,7 @@ import type { CubeState } from '../engine/state';
 import type { CubeView } from '../render/CubeView';
 import type { Cue, ParsedScript, ScriptTiming } from './script';
 import { keycapsFor } from './keys';
+import type { SceneRef } from './scenes';
 import { resolveSelector } from './selectors';
 
 // Plays one narration clip and fires its cues in sync.
@@ -14,6 +15,7 @@ import { resolveSelector } from './selectors';
 
 export interface PlayerEvents {
   word: number;
+  scene: SceneRef | null;
   keys: { alg: string | null; active: number };
   playing: boolean;
   ended: void;
@@ -49,6 +51,7 @@ export class NarrationPlayer {
   private keysGeneration = 0;
   private readonly listeners: { [K in keyof PlayerEvents]: Set<Listener<PlayerEvents[K]>> } = {
     word: new Set(),
+    scene: new Set(),
     keys: new Set(),
     playing: new Set(),
     ended: new Set(),
@@ -236,6 +239,9 @@ export class NarrationPlayer {
         break;
       case 'autorotate':
         view.autoRotate = cue.on;
+        break;
+      case 'scene':
+        this.emit('scene', cue.scene);
         break;
       case 'keys':
         this.keysGeneration++;

@@ -27,6 +27,8 @@ import Caption from './Caption.vue';
 import CubeStage from './CubeStage.vue';
 import MoveKey from './MoveKey.vue';
 import SettingsMenu from './SettingsMenu.vue';
+import StoryScene from './StoryScene.vue';
+import type { SceneRef } from '../tutor/scenes';
 
 const props = defineProps<{ locale: Locale; lessonId: string }>();
 const t = useTranslations(props.locale);
@@ -55,6 +57,7 @@ const currentWord = ref(-1);
 const keys = ref<{ alg: string; active: number } | null>(null);
 const playing = ref(false);
 const narrationEnded = ref(false);
+const scene = ref<SceneRef | null>(null);
 const audioMissing = ref(false);
 
 const taskDone = ref(false);
@@ -139,6 +142,7 @@ function enterStep(i: number) {
   feedback.value = '';
   showing.value = false;
   narrationEnded.value = false;
+  scene.value = null;
 
   v.cancelTurns();
   taskStart = startState(step.value.setup);
@@ -181,6 +185,10 @@ function playClip(clipId: string, say: string, onEnded?: () => void) {
   p.on('word', (w) => (currentWord.value = w));
   p.on('keys', (k) => (keys.value = k.alg ? { alg: k.alg, active: k.active } : null));
   p.on('playing', (on) => (playing.value = on));
+  p.on('scene', (sc) => {
+    scene.value = sc;
+    updateFraming();
+  });
   if (onEnded) p.on('ended', onEnded);
   player.value = p;
   void p.play();
@@ -323,8 +331,10 @@ function updateFraming() {
   const v = view.value;
   const el = stageEl.value;
   if (!v || !el) return;
-  if (!started.value || !isTask.value) return v.setFraming({});
   const wide = el.clientWidth >= 720;
+  // A story scene takes one side (wide) or the top (narrow).
+  if (started.value && scene.value) return v.setFraming(wide ? { x: 0.22, zoom: 1.12 } : { y: 0.22, zoom: 1.55 });
+  if (!started.value || !isTask.value) return v.setFraming({});
   v.setFraming(wide ? { x: -0.1 } : { y: -0.1, zoom: 1.12 });
 }
 let resizeObserver: ResizeObserver | null = null;
@@ -404,6 +414,10 @@ const resumeId = computed(() => (unlocked.value ? null : nextLessonId()));
       <CubeStage :label="t('cube.label')" @ready="onReady">
         <template #fallback>{{ t('cube.noWebgl') }}</template>
       </CubeStage>
+
+      <div v-if="started && unlocked" class="story-layer">
+        <StoryScene :scene="scene" :locale="locale" />
+      </div>
 
       <!-- Task rail: status and hints above the actions, beside the cube. -->
       <Transition name="fx">
@@ -615,6 +629,16 @@ h1 {
   color: var(--ink-soft);
 }
 
+/* ── Story scenes (history) ── */
+.story-layer {
+  position: absolute;
+  top: 50%;
+  left: var(--gutter);
+  translate: 0 -50%;
+  width: min(30rem, 46%);
+  pointer-events: none;
+}
+
 /* ── Task rail ── */
 .rail {
   position: absolute;
@@ -772,6 +796,13 @@ h1 {
 }
 
 @media (max-width: 720px) {
+  .story-layer {
+    top: 0.4rem;
+    left: var(--gutter);
+    right: var(--gutter);
+    width: auto;
+    translate: none;
+  }
   .rail {
     top: auto;
     bottom: 0.6rem;

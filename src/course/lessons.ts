@@ -25,11 +25,8 @@ export const LESSONS: readonly LessonDef[] = [
   {
     id: 'history',
     part: 1,
-    steps: [
-      { id: 'history-rubik', kind: 'talk', turns: false, setup: { autorotate: true } },
-      { id: 'history-numbers', kind: 'talk', turns: false, setup: { autorotate: true } },
-      { id: 'history-method', kind: 'talk', setup: { autorotate: true } },
-    ],
+    // One continuous story: animated scenes beside the cube follow the narration.
+    steps: [{ id: 'history-story', kind: 'talk', turns: false, setup: { autorotate: true } }],
   },
   {
     id: 'anatomy',
