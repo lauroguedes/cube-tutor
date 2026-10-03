@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.3",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource/atkinson-hyperlegible": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "astro": "^7.3.5",
     "three": "^0.186.1",
     "vue": "^3.5.43"

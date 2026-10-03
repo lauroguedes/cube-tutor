@@ -1,0 +1,119 @@
+@import '@fontsource-variable/bricolage-grotesque/index.css';
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+/*
+  Design tokens.
+  The cube sits on a cool, seamless studio backdrop so the stickers carry all
+  the color. The only accent is the tutor's highlighter yellow, which marks
+  the word being spoken. Parts of the course are coded by sticker color.
+*/
+:root {
+  --sweep: #e4e7ec;
+  --sweep-deep: #cfd4dc;
+  --surface: #f4f5f7;
+  --ink: #15161a;
+  --ink-soft: #5d6270;
+  --hairline: #c9ced7;
+  --highlight: #ffd23a;
+  --highlight-ink: #15161a;
+  --success: #16a34a;
+  --warn: #c2410c;
+
+  --part-1: #1d4ed8;
+  --part-2: #16a34a;
+  --part-3: #f26a1b;
+  --part-4: #c81e32;
+
+  --font-display: 'Bricolage Grotesque Variable', 'Avenir Next', system-ui, sans-serif;
+  --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --step--1: clamp(0.82rem, 0.8rem + 0.1vw, 0.88rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.1rem);
+  --step-1: clamp(1.2rem, 1.1rem + 0.5vw, 1.45rem);
+  --step-2: clamp(1.45rem, 1.25rem + 1vw, 2rem);
+  --step-3: clamp(2rem, 1.5rem + 2.4vw, 3.4rem);
+
+  --radius: 14px;
+  --radius-sm: 9px;
+  --gutter: clamp(16px, 3vw, 32px);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sweep: #1b1d22;
+    --sweep-deep: #101114;
+    --surface: #24262c;
+    --ink: #eef0f4;
+    --ink-soft: #9aa0ad;
+    --hairline: #363943;
+    --highlight-ink: #15161a;
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: radial-gradient(120% 90% at 50% 38%, var(--surface) 0%, var(--sweep) 55%, var(--sweep-deep) 100%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--highlight);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

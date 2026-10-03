@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import Playground from '../components/Playground.vue';
+import { getLocaleFromUrl, useTranslations } from '../i18n/utils';
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+---
+
+<Base title={t('play.title')}>
+  <Playground client:only="vue" locale={locale} />
+</Base>
