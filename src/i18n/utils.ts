@@ -16,7 +16,12 @@ export function useTranslations(locale: Locale) {
   };
 }
 
-/** Locale-aware path, e.g. localePath('pt-br', '/learn') → '/pt-br/learn'. */
+/**
+ * Locale-aware page path with the trailing slash pages are served at,
+ * e.g. localePath('pt-br', '/learn') → '/pt-br/learn/'. Matching the
+ * canonical URLs avoids a redirect on every internal link.
+ */
 export function localePath(locale: Locale, path: string): string {
-  return locale === defaultLocale ? path : `/${locale}${path}`;
+  const withSlash = path.endsWith('/') ? path : `${path}/`;
+  return locale === defaultLocale ? withSlash : `/${locale}${withSlash}`;
 }

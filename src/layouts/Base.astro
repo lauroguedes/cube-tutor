@@ -1,14 +1,31 @@
 ---
 import '../styles/global.css';
+import { PROJECT } from '../brand/project';
 import { getLocaleFromUrl, useTranslations } from '../i18n/utils';
 
 interface Props {
+  /** Page title; the site name is appended. Omit on the home page. */
   title?: string;
+  /** Meta and social description. Defaults to the site tagline. */
+  description?: string;
+  /** Social image path, relative to the site. */
+  image?: string;
+  /** Keep this page out of search results (e.g. 404). */
+  noindex?: boolean;
+  /** Structured data (schema.org) for this page. */
+  jsonLd?: Record<string, unknown>;
 }
 
 const locale = getLocaleFromUrl(Astro.url);
 const t = useTranslations(locale);
-const { title } = Astro.props;
+const { title, description = t('seo.description'), image = '/og-image.png', noindex = false, jsonLd } = Astro.props;
+
+const siteName = t('app.title');
+const fullTitle = title ? `${title} · ${siteName}` : `${siteName}: ${t('seo.homeTitle')}`;
+const site = Astro.site ?? new URL(Astro.url.origin);
+const canonical = new URL(Astro.url.pathname, site).href;
+const imageUrl = new URL(image, site).href;
+const ogLocale = { en: 'en_US' }[locale] ?? 'en_US';
 ---
 
 <!doctype html>
@@ -16,9 +33,43 @@ const { title } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content={t('app.tagline')} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <meta name="author" content={PROJECT.author} />
     <meta name="generator" content={Astro.generator} />
+
+    <!-- Theme and icons -->
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#e4e7ec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1b1d22" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={t('seo.imageAlt')} />
+    <meta property="og:locale" content={ogLocale} />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={imageUrl} />
+    <meta name="twitter:image:alt" content={t('seo.imageAlt')} />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+
     <script is:inline>
       // Apply a chosen light/dark theme before the first paint (no flash).
       try {
@@ -27,7 +78,6 @@ const { title } = Astro.props;
         if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
       } catch (e) {}
     </script>
-    <title>{title ? `${title} · ${t('app.title')}` : t('app.title')}</title>
   </head>
   <body>
     <slot />

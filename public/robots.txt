@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cubetutor.lauroguedes.dev/sitemap-index.xml

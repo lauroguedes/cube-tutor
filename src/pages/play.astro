@@ -7,6 +7,10 @@ const locale = getLocaleFromUrl(Astro.url);
 const t = useTranslations(locale);
 ---
 
-<Base title={t('play.title')}>
+<Base title={t('play.title')} description={t('seo.playDescription')}>
   <Playground client:only="vue" locale={locale} />
+  <article class="visually-hidden">
+    <h1>{t('play.title')}</h1>
+    <p>{t('seo.playDescription')}</p>
+  </article>
 </Base>

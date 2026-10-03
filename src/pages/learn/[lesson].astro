@@ -1,18 +1,64 @@
 ---
 import Base from '../../layouts/Base.astro';
 import LessonPlayer from '../../components/LessonPlayer.vue';
-import { LESSONS, courseText } from '../../course';
-import { getLocaleFromUrl } from '../../i18n/utils';
+import { LESSONS, courseText, lessonIndex } from '../../course';
+import { getLocaleFromUrl, localePath, useTranslations } from '../../i18n/utils';
+import { parseScript } from '../../tutor/script';
 
 export function getStaticPaths() {
   return LESSONS.map((l) => ({ params: { lesson: l.id } }));
 }
 
-const { lesson } = Astro.params;
+const { lesson: lessonId } = Astro.params as { lesson: string };
 const locale = getLocaleFromUrl(Astro.url);
-const title = courseText(locale).lessons[lesson]?.title;
+const t = useTranslations(locale);
+const text = courseText(locale);
+const lesson = LESSONS.find((l) => l.id === lessonId)!;
+const info = text.lessons[lessonId]!;
+const position = lessonIndex(lessonId) + 1;
+const description = t('seo.lessonDescription', { summary: info.summary });
+const site = (Astro.site ?? new URL(Astro.url.origin)).href;
+const url = (path: string) => new URL(localePath(locale, path), site).href;
+
+// The tutor's words, without cue markers: a transcript for search engines and
+// screen readers (the same text appears as captions during the lesson).
+const transcript = lesson.steps.flatMap((s) => {
+  const st = text.steps[s.id]!;
+  return [parseScript(st.say).text, st.done ? parseScript(st.done).text : null].filter(Boolean) as string[];
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'LearningResource',
+      name: info.title,
+      description,
+      url: url(`/learn/${lessonId}`),
+      learningResourceType: 'Lesson',
+      educationalLevel: 'Beginner',
+      isAccessibleForFree: true,
+      inLanguage: locale,
+      position,
+      isPartOf: { '@type': 'Course', name: t('seo.courseName'), url: site },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: t('app.title'), item: url('/') },
+        { '@type': 'ListItem', position: 2, name: t('learn.title'), item: url('/learn') },
+        { '@type': 'ListItem', position: 3, name: info.title, item: url(`/learn/${lessonId}`) },
+      ],
+    },
+  ],
+};
 ---
 
-<Base title={title}>
-  <LessonPlayer client:only="vue" locale={locale} lessonId={lesson} />
+<Base title={info.title} description={description} jsonLd={jsonLd}>
+  <LessonPlayer client:only="vue" locale={locale} lessonId={lessonId} />
+  <article class="visually-hidden" aria-label={`${info.title}: transcript`}>
+    <h1>{info.title}</h1>
+    <p>{info.summary}</p>
+    {transcript.map((line) => <p>{line}</p>)}
+  </article>
 </Base>

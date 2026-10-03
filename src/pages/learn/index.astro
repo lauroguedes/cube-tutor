@@ -9,7 +9,7 @@ const locale = getLocaleFromUrl(Astro.url);
 const t = useTranslations(locale);
 ---
 
-<Base title={t('learn.title')}>
+<Base title={t('learn.title')} description={t('seo.learnDescription')}>
   <main class="wrap fx-mount">
     <header>
       <BrandMark href={localePath(locale, '/')} label={t('app.title')} />

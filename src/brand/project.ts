@@ -2,7 +2,8 @@
 
 export const PROJECT = {
   author: 'Lauro Guedes',
-  authorUrl: 'https://github.com/lauroguedes',
+  authorUrl: 'https://lauroguedes.dev',
+  coffeeUrl: 'https://buymeacoffee.com/lauroguedes',
   repo: 'lauroguedes/cube-tutor',
   repoUrl: 'https://github.com/lauroguedes/cube-tutor',
 } as const;
