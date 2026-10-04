@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+import LessonMap from '../components/LessonMap.vue';
+import SettingsMenu from '../components/SettingsMenu.vue';
+import BrandMark from '../components/BrandMark.vue';
+import { getLocaleFromUrl, localePath, useTranslations } from '../i18n/utils';
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+---
+
+<Base title={t('learn.title')} description={t('seo.learnDescription')}>
+  <main class="wrap fx-mount">
+    <header>
+      <BrandMark href={localePath(locale, '/')} label={t('app.title')} />
+      <nav>
+        <a class="play" href={localePath(locale, '/play')}>{t('home.freePlay')}</a>
+        <SettingsMenu client:load locale={locale} />
+      </nav>
+    </header>
+    <h1>{t('learn.title')}</h1>
+    <LessonMap client:load locale={locale} />
+  </main>
+</Base>
+
+<style>
+  .wrap {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: var(--gutter) var(--gutter) 4rem;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.2rem;
+  }
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  header :global(.brand) {
+    font-size: var(--step-1);
+  }
+  .play {
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  /* Phones: the logo alone, so the links and menus fit on one row. */
+  @media (max-width: 440px) {
+    header :global(.brand .word) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    nav {
+      gap: 0.75rem;
+    }
+  }
+  h1 {
+    font-size: var(--step-3);
+    margin-bottom: 2rem;
+  }
+</style>

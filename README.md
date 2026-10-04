@@ -61,7 +61,7 @@ Progress is saved in your browser. There are no accounts and no tracking.
 
 ## Features
 
-- 🎙️ **Narrated tutor**: two voices to choose from (Audra and Josh), with captions that highlight each word as it is spoken.
+- 🎙️ **Narrated tutor**: two voices per language (Audra and Josh in English, Fernanda and Cristian in Portuguese), with captions that highlight each word as it is spoken.
 - 🧊 **Interactive 3D cube**: drag a face to turn it, drag around it to look from any side, or use the keyboard (`R L U D F B`, `Shift` for counter-clockwise).
 - 🎬 **Moves in sync with the voice**: turns, highlights, arrows, camera moves and the exploded view happen on the exact word they belong to.
 - ✅ **Tasks that check understanding**: tasks are judged by the cube's state, so any correct approach passes. Each one has hints, a *Show me* demo, undo and reset.
@@ -71,7 +71,7 @@ Progress is saved in your browser. There are no accounts and no tracking.
 - 🌗 **Light and dark themes**, following the system or set by hand.
 - 🕹️ **Free play mode** with scramble, undo/redo, face letters and an exploded view of the mechanism.
 - ♿ **Accessible**: keyboard control, visible focus, captions, screen-reader labels and reduced-motion support.
-- 🌍 **Ready for translation**: the UI and every lesson are kept separate from the code. English ships first.
+- 🌍 **English and Brazilian Portuguese**: the whole course, narration included, in both languages. Switch with the language button next to Settings; the home page opens in the visitor's language.
 
 ## Screenshots
 
@@ -144,8 +144,8 @@ Narration is generated ahead of time by `tools/narrate`, never in the browser, s
    | Variable | Description |
    | --- | --- |
    | `ELEVENLABS_API_KEY` | API key with text-to-speech permission |
-   | `ELEVENLABS_VOICE_FEMALE_ID` | Voice ID for the female tutor (Audra) |
-   | `ELEVENLABS_VOICE_MALE_ID` | Voice ID for the male tutor (Josh) |
+   | `ELEVENLABS_VOICE_FEMALE_ID` | Voice ID for the female English tutor (Audra) |
+   | `ELEVENLABS_VOICE_MALE_ID` | Voice ID for the male English tutor (Josh) |
    | `ELEVENLABS_MODEL_ID` | Model to use. Defaults to `eleven_v4` |
 
 3. Generate:
@@ -153,9 +153,10 @@ Narration is generated ahead of time by `tools/narrate`, never in the browser, s
    ```bash
    npm run narrate -- --dry-run   # show what would be generated and how many characters
    npm run narrate                # generate missing or changed clips for both voices
+   npm run narrate -- --locale pt-br  # the same for Brazilian Portuguese
    ```
 
-Each clip is cached by its text, voice and model, so only new or edited lines use characters. Options: `--voice female|male`, `--only <step-id,...>`, `--locale <code>`, `--force`.
+Each clip is cached by its text, voice and model, so only new or edited lines use characters. Portuguese voices (Fernanda and Cristian) are set in `tools/narrate/narrate.ts`. Options: `--voice female|male`, `--only <step-id,...>`, `--locale <code>`, `--force`.
 
 ## Project structure
 
@@ -175,10 +176,11 @@ cube-tutor/
 │   ├── engine/           # Cube logic: state, notation, goal checks (pure TypeScript)
 │   ├── i18n/             # UI strings per locale
 │   ├── layouts/          # Page shell
-│   ├── pages/            # Routes: /, /learn, /learn/[lesson], /play
+│   ├── pages/            # Routes: /, /learn, /learn/[lesson], /play, and the same under /pt-br/
 │   ├── render/           # Three.js cube, materials, animation and input
 │   ├── styles/           # Design tokens and shared styles
-│   └── tutor/            # Narration scripts, audio-synced player, progress, story scenes
+│   ├── tutor/            # Narration scripts, audio-synced player, progress, story scenes
+│   └── views/            # Page bodies shared by every language's routes
 └── tools/
     ├── brand/            # Logo/favicon generator
     ├── narrate/          # ElevenLabs narration generator
@@ -200,15 +202,16 @@ npm test         # unit tests
 npm run check    # type-check
 ```
 
-The suite covers the cube engine (move notation, group properties, goal checks), every beginner algorithm, narration parsing and timing, and course integrity: every step has text, every task starts unsolved, and every *Show me* solution actually completes its task.
+The suite covers the cube engine (move notation, group properties, goal checks), every beginner algorithm, narration parsing and timing, and course integrity: every step has text in every language with the same cues, every task starts unsolved, and every *Show me* solution actually completes its task.
 
 ## Adding a language
 
-1. Add the locale to `astro.config.mjs` and to `src/i18n/ui.ts`. The types ensure no UI string is missing.
+1. Add the locale to `astro.config.mjs` (`i18n` and the sitemap) and to `src/i18n/ui.ts`, including its entry in `LOCALES`. The types ensure no UI string is missing.
 2. Copy `src/course/text/en.ts` to the new locale and translate it, keeping the `{{…}}` cue markers.
-3. Add the localized pages under `src/pages/<locale>/`, mirroring `src/pages/`.
-4. Generate narration with voices that speak the language: `npm run narrate -- --locale <code>`.
-5. Run `npm test`. It fails if any lesson step is missing text.
+3. Add the routes under `src/pages/<locale>/`, mirroring `src/pages/pt-br/` (each one renders a view from `src/views/`).
+4. Add the share card to `tools/og/generate.ts` and run `npm run og`.
+5. Add the voice IDs to `tools/narrate/narrate.ts` and run `npm run narrate -- --locale <code>`.
+6. Run `npm test`. It fails if any lesson step is missing text or its cue markers differ from English.
 
 ## Deployment
 

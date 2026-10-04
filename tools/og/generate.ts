@@ -2,7 +2,8 @@
 //
 //   npm run og
 //
-// public/og-image.png        1200×630 Open Graph / Twitter card
+// public/og-image.png        1200×630 Open Graph / Twitter card (English)
+// public/og-image-pt-br.png  the same card in Brazilian Portuguese
 // public/apple-touch-icon.png 180×180
 // public/icon-192.png, icon-512.png  web app manifest icons
 //
@@ -79,7 +80,27 @@ const h = (type: string, style: Record<string, unknown>, children?: unknown, ext
   props: { style, children, ...extra },
 });
 
-async function ogImage(): Promise<void> {
+interface CardCopy {
+  /** Headline lines; the highlighted word starts the line it's in. */
+  lines: { highlight?: string; text: string }[];
+  size: number;
+  tagline: string;
+}
+
+const CARDS: Record<string, CardCopy> = {
+  'og-image.png': {
+    lines: [{ text: 'Learn to' }, { highlight: 'solve', text: 'the cube.' }],
+    size: 96,
+    tagline: 'A patient narrated tutor and an interactive 3D cube. Free, no account.',
+  },
+  'og-image-pt-br.png': {
+    lines: [{ text: 'Aprenda a' }, { highlight: 'resolver', text: 'o cubo.' }],
+    size: 82,
+    tagline: 'Aulas narradas e um cubo 3D interativo. Grátis, sem cadastro.',
+  },
+};
+
+async function ogImage(file: string, copy: CardCopy): Promise<void> {
   const width = 1200;
   const height = 630;
   const tree = h(
@@ -102,14 +123,19 @@ async function ogImage(): Promise<void> {
           h('span', { fontFamily: 'Bricolage', fontSize: 38, letterSpacing: -1 }, 'Cube Tutor'),
         ]),
         h('div', { display: 'flex', flexDirection: 'column', gap: 26 }, [
-          h('div', { display: 'flex', flexDirection: 'column', fontFamily: 'Bricolage', fontSize: 96, lineHeight: 0.95, letterSpacing: -4 }, [
-            h('span', {}, 'Learn to'),
-            h('span', { display: 'flex' }, [
-              h('span', { backgroundImage: `linear-gradient(transparent 62%, ${HIGHLIGHT} 62%, ${HIGHLIGHT} 92%, transparent 92%)` }, 'solve'),
-              h('span', { marginLeft: 20 }, 'the cube.'),
-            ]),
-          ]),
-          h('span', { fontSize: 31, lineHeight: 1.35, color: INK_SOFT, maxWidth: 600 }, 'A patient narrated tutor and an interactive 3D cube. Free, no account.'),
+          h(
+            'div',
+            { display: 'flex', flexDirection: 'column', fontFamily: 'Bricolage', fontSize: copy.size, lineHeight: 0.95, letterSpacing: -copy.size / 24 },
+            copy.lines.map((line) =>
+              line.highlight
+                ? h('span', { display: 'flex' }, [
+                    h('span', { backgroundImage: `linear-gradient(transparent 62%, ${HIGHLIGHT} 62%, ${HIGHLIGHT} 92%, transparent 92%)` }, line.highlight),
+                    h('span', { marginLeft: copy.size * 0.21 }, line.text),
+                  ])
+                : h('span', {}, line.text),
+            ),
+          ),
+          h('span', { fontSize: 31, lineHeight: 1.35, color: INK_SOFT, maxWidth: 600 }, copy.tagline),
         ]),
         h('span', { fontFamily: 'Plex', fontSize: 24, color: INK_SOFT, letterSpacing: 0.5 }, new URL(SITE).host),
       ]),
@@ -126,7 +152,7 @@ async function ogImage(): Promise<void> {
       { name: 'Plex', data: font('node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff'), weight: 500, style: 'normal' },
     ],
   });
-  writeFileSync(join(PUBLIC, 'og-image.png'), new Resvg(svg, { fitTo: { mode: 'width', value: width } }).render().asPng());
+  writeFileSync(join(PUBLIC, file), new Resvg(svg, { fitTo: { mode: 'width', value: width } }).render().asPng());
 }
 
 // ─── App icons from the favicon ────────────────────────────────────────────
@@ -144,6 +170,6 @@ function icons(): void {
 
 const SITE = process.env.SITE_URL ?? 'https://cubetutor.lauroguedes.dev';
 
-await ogImage();
+for (const [file, copy] of Object.entries(CARDS)) await ogImage(file, copy);
 icons();
-console.log('Wrote og-image.png, apple-touch-icon.png, icon-192.png and icon-512.png');
+console.log(`Wrote ${Object.keys(CARDS).join(', ')}, apple-touch-icon.png, icon-192.png and icon-512.png`);

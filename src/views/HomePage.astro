@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import Home from '../components/Home.vue';
+import { PROJECT } from '../brand/project';
+import { LESSONS } from '../course';
+import { LOCALES } from '../i18n/ui';
+import { getLocaleFromUrl, localePath, useTranslations } from '../i18n/utils';
+
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+const site = (Astro.site ?? new URL(Astro.url.origin)).href;
+const home = new URL(localePath(locale, '/'), site).href;
+
+// schema.org: the site and the free beginner course it offers.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'WebSite', name: t('app.title'), url: home, inLanguage: LOCALES[locale].lang },
+    {
+      '@type': 'Course',
+      name: t('seo.courseName'),
+      description: t('seo.description'),
+      url: home,
+      image: new URL(LOCALES[locale].ogImage, site).href,
+      inLanguage: LOCALES[locale].lang,
+      educationalLevel: 'Beginner',
+      isAccessibleForFree: true,
+      numberOfLessons: LESSONS.length,
+      provider: { '@type': 'Person', name: PROJECT.author, url: PROJECT.authorUrl },
+      offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD', category: 'Free' },
+      hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'Online', courseWorkload: 'PT1H' },
+    },
+  ],
+};
+---
+
+<Base jsonLd={jsonLd}>
+  <Home client:load locale={locale} />
+</Base>

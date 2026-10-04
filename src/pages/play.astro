@@ -1,16 +1,5 @@
 ---
-import Base from '../layouts/Base.astro';
-import Playground from '../components/Playground.vue';
-import { getLocaleFromUrl, useTranslations } from '../i18n/utils';
-
-const locale = getLocaleFromUrl(Astro.url);
-const t = useTranslations(locale);
+import PlayPage from '../views/PlayPage.astro';
 ---
 
-<Base title={t('play.title')} description={t('seo.playDescription')}>
-  <Playground client:only="vue" locale={locale} />
-  <article class="visually-hidden">
-    <h1>{t('play.title')}</h1>
-    <p>{t('seo.playDescription')}</p>
-  </article>
-</Base>
+<PlayPage />

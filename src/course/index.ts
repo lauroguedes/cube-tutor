@@ -2,12 +2,13 @@ import type { Locale } from '../i18n/ui';
 import { parseScript, type ParsedScript } from '../tutor/script';
 import { LESSONS } from './lessons';
 import { en } from './text/en';
+import { ptBr } from './text/pt-br';
 import type { CourseText, LessonDef, PartId, StepDef, StepText } from './types';
 
 export { LESSONS } from './lessons';
 export type * from './types';
 
-const TEXTS: Record<Locale, CourseText> = { en };
+const TEXTS: Record<Locale, CourseText> = { en, 'pt-br': ptBr };
 
 export function courseText(locale: Locale): CourseText {
   return TEXTS[locale];

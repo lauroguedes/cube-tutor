@@ -3,6 +3,7 @@
 //   npm run narrate               generate missing or changed clips, both voices
 //   npm run narrate -- --dry-run  show what would be generated and how many characters
 //   npm run narrate -- --voice female --only welcome-intro
+//   npm run narrate -- --locale pt-br   Brazilian Portuguese (Fernanda and Cristian)
 //
 // Each clip is requested with character timestamps, saved as an MP3, and its
 // per-character start times are written to public/audio/<locale>/<voice>/manifest.json.
@@ -50,7 +51,15 @@ function env(name: string, ...fallbacks: string[]): string {
   throw new Error(`Missing ${name} in .env`);
 }
 
-function voiceIdFor(voice: VoiceId): string {
+// ElevenLabs voices per language. Voice ids aren't secret; English reads them
+// from .env, where they were first configured.
+const VOICE_IDS: Partial<Record<Locale, Record<VoiceId, string>>> = {
+  'pt-br': { female: 'KHmfNHtEjHhLK9eER20w', male: 'abaIlsBKdPrtlWNar7Ea' }, // Fernanda, Cristian
+};
+
+function voiceIdFor(locale: Locale, voice: VoiceId): string {
+  const fixed = VOICE_IDS[locale]?.[voice];
+  if (fixed) return fixed;
   // ELEVENLABS_VOICE_MAILE_ID is accepted too (spelling used in the original .env).
   return voice === 'male'
     ? env('ELEVENLABS_VOICE_MALE_ID', 'ELEVENLABS_VOICE_MAILE_ID')
@@ -119,7 +128,7 @@ async function main() {
   for (const voice of args.voices) {
     let voiceId: string;
     try {
-      voiceId = voiceIdFor(voice);
+      voiceId = voiceIdFor(args.locale, voice);
     } catch (err) {
       if (!args.dryRun) throw err;
       voiceId = 'unknown'; // a dry run still reports counts without voice ids

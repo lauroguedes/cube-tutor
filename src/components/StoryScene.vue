@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { courseText } from '../course';
-import type { Locale } from '../i18n/ui';
+import { LOCALES, type Locale } from '../i18n/ui';
 import { useTranslations } from '../i18n/utils';
 import type { SceneRef } from '../tutor/scenes';
 
@@ -13,6 +13,9 @@ const t = useTranslations(props.locale);
 const text = courseText(props.locale);
 
 const PATTERNS = '43,252,003,274,489,856,000'.split(',');
+// Digit grouping and decimal mark follow the language (43,252… vs 43.252…).
+const format = new Intl.NumberFormat(LOCALES[props.locale].lang, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const GROUP = format.formatToParts(1_000_000).find((p) => p.type === 'group')?.value ?? ',';
 const STICKERS = ['#16a34a', '#f2f2ee', '#c81e32', '#1d4ed8', '#ffd23a', '#f26a1b', '#f2f2ee', '#16a34a', '#c81e32'];
 const METHOD_LESSONS = ['daisy', 'cross', 'corners', 'middle', 'yellow-cross', 'yellow-corners', 'twist-corners', 'last-edges'];
 const METHOD_COLORS = ['#ffd23a', '#f2f2ee', '#f2f2ee', '#16a34a', '#ffd23a', '#f26a1b', '#c81e32', '#1d4ed8'];
@@ -118,7 +121,7 @@ const RING = 2 * Math.PI * 44;
         <p class="eyebrow">{{ t('scene.patterns.eyebrow') }}</p>
         <p class="number">
           <template v-for="(g, i) in PATTERNS" :key="i">
-            <span class="rise" :style="{ '--i': i }">{{ g }}</span><span v-if="i < PATTERNS.length - 1" class="comma rise" :style="{ '--i': i }">,</span>
+            <span class="rise" :style="{ '--i': i }">{{ g }}</span><span v-if="i < PATTERNS.length - 1" class="comma rise" :style="{ '--i': i }">{{ GROUP }}</span>
           </template>
         </p>
         <p class="caption">{{ t('scene.patterns.caption') }}</p>
@@ -166,7 +169,7 @@ const RING = 2 * Math.PI * 44;
               :stroke-dashoffset="RING * (1 - clock / 60)"
             />
           </svg>
-          <span class="time">{{ clock.toFixed(2) }}<small>s</small></span>
+          <span class="time">{{ format.format(clock) }}<small>s</small></span>
         </div>
         <p class="caption">{{ t('scene.championship.caption') }}</p>
       </section>

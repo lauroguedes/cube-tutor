@@ -42,6 +42,11 @@ describe.each(Object.keys(ui) as (keyof typeof ui)[])('text (%s)', (locale) => {
     }
   });
 
+  it.each(steps.map((s) => [s.id] as const))('%s has the same cues as English', (id) => {
+    const cues = (say: string) => parseScript(say).cues.map((c) => JSON.stringify(c.cue));
+    expect(cues(text.steps[id]!.say)).toEqual(cues(courseText('en').steps[id]!.say));
+  });
+
   it('has no leftover marker braces in spoken text', () => {
     for (const item of narrationItems(locale)) {
       expect(item.script.text, item.id).not.toMatch(/[{}]/);

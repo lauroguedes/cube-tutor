@@ -1,0 +1,12 @@
+---
+import LessonPage from '../../../views/LessonPage.astro';
+import { LESSONS } from '../../../course';
+
+export function getStaticPaths() {
+  return LESSONS.map((l) => ({ params: { lesson: l.id } }));
+}
+
+const { lesson } = Astro.params as { lesson: string };
+---
+
+<LessonPage lessonId={lesson} />
