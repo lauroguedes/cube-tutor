@@ -9,6 +9,11 @@ updates:
         patterns: ['astro', '@astrojs/*']
       dev-tools:
         dependency-type: development
+    ignore:
+      # @astrojs/check (astro check) only supports TypeScript 5 and 6 so far.
+      # Remove this once it accepts TypeScript 7.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule:
