@@ -304,6 +304,6 @@ export type Locale = keyof typeof ui;
 
 /** How each locale is named (in its own language) and tagged (BCP 47, Open Graph), and its social card. */
 export const LOCALES: Record<Locale, { name: string; short: string; lang: string; og: string; ogImage: string }> = {
-  en: { name: 'English', short: 'EN', lang: 'en', og: 'en_US', ogImage: '/og-image.png' },
-  'pt-br': { name: 'Português (Brasil)', short: 'PT', lang: 'pt-BR', og: 'pt_BR', ogImage: '/og-image-pt-br.png' },
+  en: { name: 'English', short: 'EN', lang: 'en', og: 'en_US', ogImage: '/og-image.jpg' },
+  'pt-br': { name: 'Português (Brasil)', short: 'PT', lang: 'pt-BR', og: 'pt_BR', ogImage: '/og-image-pt-br.jpg' },
 };
