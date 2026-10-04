@@ -24,7 +24,7 @@ Free, open source, no account needed.
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-16a34a?style=flat-square)](#contributing)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy_me_a_coffee-FFDD00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/lauroguedes)
 
-<img src="docs/images/home.jpg" alt="Cube Tutor home page: choose a tutor voice and a cube style, next to a 3D cube" width="760">
+<img src="docs/images/home.jpg" alt="Cube Tutor home page in an Arc-style browser frame: choose a tutor voice and cube style beside an interactive 3D cube" width="760">
 
 </div>
 

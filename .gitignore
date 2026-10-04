@@ -1,5 +1,7 @@
 # build output
 dist/
+# generated screenshots and working artifacts
+/output/
 # generated types
 .astro/
 
@@ -25,6 +27,7 @@ pnpm-debug.log*
 
 # local AI-assistant / preview tooling
 .claude/
+.playwright-cli/
 
 # macOS-specific files
 .DS_Store
