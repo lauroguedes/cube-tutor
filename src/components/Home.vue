@@ -11,6 +11,7 @@ import { audioBase, loadManifest, VOICES, type VoiceId } from '../tutor/narratio
 import { loadProgress, nextLessonId, updateSettings, SETTINGS_EVENT, type Settings } from '../tutor/progress';
 import CubeStage from './CubeStage.vue';
 import SettingsMenu from './SettingsMenu.vue';
+import ShopLink from './ShopLink.vue';
 import BrandMark from './BrandMark.vue';
 
 const props = defineProps<{ locale: Locale }>();
@@ -187,6 +188,7 @@ onBeforeUnmount(() => {
         <a class="secondary" :href="localePath(locale, '/learn')">{{ t('home.allLessons') }}</a>
       </div>
       <p class="what">{{ t('home.what') }} <a :href="localePath(locale, '/play')">{{ t('home.freePlay') }}</a></p>
+      <ShopLink :locale="locale" />
     </section>
 
     <div class="cube">

@@ -32,5 +32,5 @@ Free, no-login web app that teaches beginners to solve the 3×3 cube with a narr
 - Narration audio is generated at build time (`tools/narrate/`, ElevenLabs key in `.env`); no API keys in client code.
 - Narration in Portuguese is spoken the same for both voices: no gendered words about the tutor or the learner ("obrigado", "sozinho"). Notation reads "R linha", "F dois"; the yellow-cross shape is a "barra", never "linha".
 - Never commit `.env` or editor swap files (`.env.swp`); they hold the ElevenLabs key. Stage files explicitly rather than `git add -A` when secrets may be open in an editor.
-- Logo files and the favicon are generated from `src/brand/logo.ts` with `npm run brand`; credits live in `src/brand/project.ts`.
+- Logo files and the favicon are generated from `src/brand/logo.ts` with `npm run brand`; credits and the per-language affiliate store links (`SHOP_URLS`, pt-BR only for now) live in `src/brand/project.ts`. Affiliate links use `rel="sponsored"` and always show the "affiliate link" note.
 - Commands: `npm run test`, `npm run check`, `npm run dev`, `npm run narrate` (`-- --locale pt-br`), `npm run brand`, `npm run og`.

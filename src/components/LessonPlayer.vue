@@ -27,6 +27,7 @@ import Caption from './Caption.vue';
 import CubeStage from './CubeStage.vue';
 import MoveKey from './MoveKey.vue';
 import SettingsMenu from './SettingsMenu.vue';
+import ShopLink from './ShopLink.vue';
 import StoryScene from './StoryScene.vue';
 import type { SceneRef } from '../tutor/scenes';
 
@@ -479,12 +480,19 @@ const resumeId = computed(() => (unlocked.value ? null : nextLessonId()));
         <div v-else-if="!started" class="gate">
           <h2>{{ text.lessons[lesson.id]?.title }}</h2>
           <p>{{ text.lessons[lesson.id]?.summary }}</p>
-          <button type="button" class="primary" :disabled="!view" @click="start">{{ t('lesson.start') }}</button>
+          <div class="gate-actions">
+            <button type="button" class="primary" :disabled="!view" @click="start">{{ t('lesson.start') }}</button>
+            <!-- The tutor suggests following along with a real cube. -->
+            <ShopLink v-if="lesson.id === 'welcome'" :locale="locale" variant="button" />
+          </div>
         </div>
         <div v-else-if="courseFinished" class="gate">
           <h2>{{ t('lesson.finishCourse') }}</h2>
           <p>{{ t('lesson.courseDone') }}</p>
-          <a class="primary" :href="localePath(locale, '/play')">{{ t('home.freePlay') }}</a>
+          <div class="gate-actions">
+            <a class="primary" :href="localePath(locale, '/play')">{{ t('home.freePlay') }}</a>
+            <ShopLink :locale="locale" variant="button" />
+          </div>
         </div>
       </Transition>
     </div>
@@ -627,6 +635,12 @@ h1 {
 .gate p {
   margin: 0;
   color: var(--ink-soft);
+}
+.gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 /* ── Story scenes (history) ── */

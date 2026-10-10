@@ -146,6 +146,8 @@ const en = {
   'settings.close': 'Close',
   'settings.language': 'Language',
   'lesson.transcript': 'transcript',
+  'shop.cta': 'Get a real cube',
+  'shop.note': 'affiliate link',
 } as const;
 
 export type UiKey = keyof typeof en;
@@ -293,6 +295,8 @@ const ptBr: Record<UiKey, string> = {
   'settings.coffee': 'Me pague um café',
   'settings.close': 'Fechar',
   'settings.language': 'Idioma',
+  'shop.cta': 'Compre um cubo de verdade',
+  'shop.note': 'link de afiliado',
 };
 
 export const ui = {
