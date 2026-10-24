@@ -60,14 +60,14 @@
     "esbuild": true
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.11",
     "@resvg/resvg-js": "^2.6.2",
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.5",
     "@types/three": "^0.186.0",
     "sharp": "^0.35.5",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.3",
-    "wrangler": "^4.147.0"
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.3"
   }
 }
